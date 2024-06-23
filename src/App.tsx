@@ -1,26 +1,27 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { useEffect } from 'react'
+
+import logo from './logo.png'
+import './App.scss'
+import Assets from './views/pages/Assets'
+
+const tele = window.Telegram.WebApp
 
 function App() {
+  useEffect(() => {
+    tele.ready()
+  }, [])
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+      <header>
+        <img src={logo} className="App__logo" alt="logo" />
       </header>
+
+      <main className="App__main">
+        <Assets />
+      </main>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App

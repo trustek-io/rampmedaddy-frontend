@@ -1,0 +1,18 @@
+.App {
+  text-align: center;
+  background-color: #000000;
+  height: 100vh;
+  padding: 10px;
+  color: #ffffff;
+  overflow: hidden;
+
+  &__logo {
+    width: auto;
+    height: 100px;
+  }
+
+  &__main {
+    height: calc(100vh - 100px);
+    overflow-y: scroll;
+  }
+}
