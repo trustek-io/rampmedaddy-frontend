@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
-import logo from './logo.png'
-import './App.scss'
 import Assets from './views/pages/Assets'
+import AssetProvider from 'src/views/context/AssetContext'
+import Asset from 'src/views/pages/Asset'
 
 const tele = window.Telegram.WebApp
 
@@ -12,15 +13,14 @@ function App() {
   }, [])
 
   return (
-    <div className="App">
-      <header>
-        <img src={logo} className="App__logo" alt="logo" />
-      </header>
-
-      <main className="App__main">
-        <Assets />
-      </main>
-    </div>
+    <BrowserRouter>
+      <AssetProvider>
+        <Routes>
+          <Route path="/" element={<Assets />} />
+          <Route path="/asset" element={<Asset />} />
+        </Routes>
+      </AssetProvider>
+    </BrowserRouter>
   )
 }
 

@@ -1,4 +1,4 @@
-.App {
+.AppLayout {
   text-align: center;
   background-color: #000000;
   height: 100vh;
@@ -12,7 +12,6 @@
   }
 
   &__main {
-    height: calc(100vh - 100px);
-    overflow-y: scroll;
+    overflow: hidden;
   }
 }
