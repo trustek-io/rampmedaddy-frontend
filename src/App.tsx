@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import Assets from './views/pages/Assets'
 import AssetProvider from 'src/views/context/AssetContext'
@@ -18,6 +18,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Assets />} />
           <Route path="/asset" element={<Asset />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AssetProvider>
     </BrowserRouter>

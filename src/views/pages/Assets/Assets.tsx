@@ -13,7 +13,7 @@ import {
 import Grid from '@mui/material/Unstable_Grid2'
 
 // api
-import { Asset, getAssetsApi } from 'src/web-api-client'
+import { Asset, getAssetsApi, SupportNetwork } from 'src/web-api-client'
 
 // views
 import AppLayout from 'src/views/templates/AppLayout'
@@ -33,7 +33,6 @@ const Assets: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const debouncedQuery = useDebounce(search, 300)
-
   const { setAsset } = useAssetContext()
   const navigate = useNavigate()
 
@@ -51,8 +50,8 @@ const Assets: React.FC = () => {
   }, [])
 
   const handleNavigate = useCallback(
-    (asset: Asset) => (): void => {
-      setAsset(asset)
+    (asset: Asset, network: SupportNetwork) => (): void => {
+      setAsset({ ...asset, support_networks: [network] })
       navigate('/asset')
     },
     [setAsset, navigate]
@@ -96,14 +95,14 @@ const Assets: React.FC = () => {
           },
         }}
         onChange={(event) => setSearch(event.target.value)}
-        inputProps={{ sx: { color: '#ffffff' } }}
+        inputProps={{ sx: { color: 'text.primary' } }}
         InputProps={{
           endAdornment: !!debouncedQuery && (
             <Button
               onClick={clear}
               sx={{ minWidth: 'unset', p: 0 }}
               startIcon={
-                <Icon icon="mdi:remove-bold" sx={{ color: '#ffffff' }} />
+                <Icon icon="mdi:remove-bold" sx={{ color: 'text.primary' }} />
               }
             />
           ),
@@ -135,11 +134,11 @@ const Assets: React.FC = () => {
           {filteredAssets.length
             ? filteredAssets.map((asset) =>
                 asset.support_networks.map((network, i) => (
-                  <Grid xs={6} key={i} onClick={handleNavigate(asset)}>
+                  <Grid xs={6} key={i} onClick={handleNavigate(asset, network)}>
                     <Card
                       sx={{
                         backgroundColor: '#212B36',
-                        color: '#ffffff',
+                        color: 'text.primary',
                         p: 2,
                         borderRadius: '30px',
                         cursor: 'pointer',
