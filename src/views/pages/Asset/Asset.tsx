@@ -26,6 +26,8 @@ import { useAssetContext } from 'src/views/context/AssetContext'
 // api
 import { buyCryptoApi } from 'src/web-api-client'
 
+const URL = 'https://rampmedaddy-frontend-rust.vercel.app/'
+
 const Asset: React.FC = () => {
   const [amount, setAmount] = useState<string>('')
   const [wallet, setWallet] = useState<string>('')
@@ -71,8 +73,8 @@ const Asset: React.FC = () => {
           order_currency: asset.currency_symbol,
           network: asset.support_networks[0].network_name,
           wallet_address: wallet,
-          return_url: 'https://www.dummy.com/success',
-          cancel_url: 'https://www.dummy.com/cencel',
+          return_url: URL,
+          cancel_url: URL,
         })
 
         setRedirectUrl(response.redirect_url)
