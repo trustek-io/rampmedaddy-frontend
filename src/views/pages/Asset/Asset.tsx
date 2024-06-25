@@ -124,7 +124,6 @@ const Asset: React.FC = () => {
               },
             }}
             value={formatNumber(amount)}
-            variant="standard"
             fullWidth
             autoFocus
             type="text"
@@ -162,7 +161,15 @@ const Asset: React.FC = () => {
                   </Box>
                 </InputAdornment>
               ),
-              sx: { p: 0.5, mt: 1, backgroundColor: '#161C24' },
+              sx: {
+                p: 0.5,
+                mt: 1,
+                backgroundColor: 'background.paper',
+                borderRadius: '25px',
+                '& .Mui-focused': {
+                  borderRadius: '25px',
+                },
+              },
             }}
             error={!!getValidationError()}
             helperText={
@@ -179,14 +186,24 @@ const Asset: React.FC = () => {
               setHasError(false)
               setWallet(event.target.value)
             }}
-            variant="standard"
             inputProps={{ sx: { color: 'text.primary' } }}
             InputProps={{
-              sx: { backgroundColor: '#161C24', height: '40px' },
+              sx: {
+                backgroundColor: 'background.paper',
+                borderRadius: '25px',
+                '& .Mui-focused': {
+                  borderRadius: '25px',
+                },
+              },
             }}
             sx={{
               mt: 2,
               '&.MuiFormLabel-root': { color: 'text.primary' },
+              backgroundColor: 'background.paper',
+              borderRadius: '25px',
+              '& .Mui-focused': {
+                borderRadius: '25px',
+              },
             }}
             InputLabelProps={{
               shrink: true,

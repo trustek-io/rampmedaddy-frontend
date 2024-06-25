@@ -7,6 +7,7 @@ import {
   Button,
   Card,
   CircularProgress,
+  keyframes,
   Stack,
   TextField,
 } from '@mui/material'
@@ -25,6 +26,28 @@ import { useDebounce } from 'src/hooks/use-debounce'
 
 // helpers
 import { getFilteredAssets } from 'src/common/helpers'
+
+const rotate = keyframes`
+  0%, 30%, 50%, 70%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  10% {
+    transform: rotate(15deg) scale(1.2);
+  }
+
+  40% {
+    transform: rotate(-15deg) scale(0.8);
+  }
+
+  60% {
+    transform: rotate(10deg) scale(1.1);
+  }
+
+  80% {
+    transform: rotate(-10deg) scale(0.9);
+  }
+`
 
 const Assets: React.FC = () => {
   const [assets, setAssets] = useState<Asset[]>([])
@@ -88,7 +111,7 @@ const Assets: React.FC = () => {
         value={search}
         placeholder="Search"
         sx={{
-          backgroundColor: '#212B36',
+          backgroundColor: 'background.paper',
           borderRadius: '25px',
           '& .Mui-focused': {
             borderRadius: '25px',
@@ -137,11 +160,21 @@ const Assets: React.FC = () => {
                   <Grid xs={6} key={i} onClick={handleNavigate(asset, network)}>
                     <Card
                       sx={{
-                        backgroundColor: '#212B36',
+                        backgroundColor: '#000',
                         color: 'text.primary',
                         p: 2,
                         borderRadius: '30px',
                         cursor: 'pointer',
+                        '&:hover img': {
+                          animation: `${rotate} 2s linear infinite`,
+                        },
+                        transition: 'transform 0.3s ease-in-out',
+                        '&:hover': {
+                          transform: 'scale(1.1)',
+                          transformOrigin: 'center',
+                        },
+                        boxShadow:
+                          'rgba(255, 255, 255, 0.3) 0px 19px 38px, rgba(255, 255, 255, 0.22) 0px 15px 12px',
                       }}
                     >
                       <Stack
