@@ -25,6 +25,18 @@ import { useAssetContext } from 'src/views/context/AssetContext'
 
 // api
 import { buyCryptoApi } from 'src/web-api-client'
+import { AxiosError } from 'axios'
+
+interface CustomError {
+  error: {
+    type: string
+    code: string
+    param: {
+      [key: string]: string[]
+    }
+    error_message: string
+  }
+}
 
 const URL = 'https://rampmedaddy-frontend-rust.vercel.app/'
 
@@ -78,9 +90,13 @@ const Asset: React.FC = () => {
         })
 
         setRedirectUrl(response.redirect_url)
-      } catch (error) {
-        console.log(error)
-        setHasError(true)
+      } catch (errorResponse) {
+        const error = (errorResponse as AxiosError).response?.data
+        if (
+          (error as CustomError).error.param.wallet_address[0] ===
+          'invalid format'
+        )
+          setHasError(true)
       } finally {
         setIsLoading(false)
       }
@@ -111,7 +127,9 @@ const Asset: React.FC = () => {
         </IconButton>
       </Stack>
 
-      <Typography>How much {asset?.currency_name} would you like?</Typography>
+      <Typography sx={{ mt: 3 }}>
+        How much {asset?.currency_name} would you like?
+      </Typography>
 
       <Stack sx={{ px: 2 }}>
         <form onSubmit={buyCrypto}>
@@ -213,6 +231,11 @@ const Asset: React.FC = () => {
               },
             }}
           />
+          {hasError && (
+            <FormHelperText error sx={{ px: 2, textAlign: 'center' }}>
+              Invalid wallet address
+            </FormHelperText>
+          )}
 
           <Button
             variant="outlined"
@@ -233,12 +256,6 @@ const Asset: React.FC = () => {
           >
             Buy {asset?.currency_name}
           </Button>
-
-          {hasError && (
-            <FormHelperText error sx={{ px: 2, textAlign: 'center', mt: 3 }}>
-              Something went wrong!
-            </FormHelperText>
-          )}
         </form>
       </Stack>
     </AppLayout>
