@@ -10,6 +10,7 @@ const tele = window.Telegram.WebApp
 function App() {
   useEffect(() => {
     tele.ready()
+    tele.expand()
   }, [])
 
   return (
