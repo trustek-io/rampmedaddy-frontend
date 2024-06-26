@@ -1,5 +1,5 @@
-const { Telegraf } = require('telegraf')
-const Markup = require('telegraf/markup')
+import { Telegraf } from 'telegraf'
+import Markup from 'telegraf/markup'
 
 const TOKEN = '7451011598:AAFyv8V41N2weCc_JsfspChpTd4AsguoKds'
 const bot = new Telegraf(TOKEN)
