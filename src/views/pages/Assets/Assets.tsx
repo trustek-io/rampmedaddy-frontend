@@ -107,7 +107,6 @@ const Assets: React.FC = () => {
     <AppLayout>
       <TextField
         fullWidth
-        autoFocus
         value={search}
         placeholder="Search"
         variant="outlined"
