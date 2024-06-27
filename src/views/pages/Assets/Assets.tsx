@@ -138,84 +138,121 @@ const Assets: React.FC = () => {
           <CircularProgress />
         </Stack>
       ) : (
-        <Grid
-          container
-          spacing={3}
+        <Box
           sx={{
-            '& > .MuiGrid-item': {
-              paddingLeft: 0,
-              paddingRight: 0,
-            },
-            m: 0,
             height: 'calc(100vh - 150px)',
             overflowY: 'scroll',
           }}
         >
-          {filteredAssets.length
-            ? filteredAssets.map((asset) =>
-                asset.support_networks.map((network, i) => (
-                  <Grid xs={6} key={i} onClick={handleNavigate(asset, network)}>
-                    <Card elevation={24}
-                      sx={{
-                        backgroundColor: '#1e1e1e',
-                        color: 'text.primary',
-                        p: 2,
-                        cursor: 'pointer',
-                        '&:hover img': {
-                          animation: `${rotate} 2s linear infinite`,
-                        },
-                        transition: 'transform 0.3s ease-in-out',
-                        '&:hover': {
-                          transform: 'scale(1.1)',
-                          transformOrigin: 'center',
-                        },
-                      }}
+          <Grid
+            container
+            spacing={3}
+            sx={{
+              '& > .MuiGrid-item': {
+                paddingLeft: 0,
+                paddingRight: 0,
+              },
+              m: 0,
+            }}
+          >
+            {filteredAssets.length
+              ? filteredAssets.map((asset) =>
+                  asset.support_networks.map((network, i) => (
+                    <Grid
+                      xs={6}
+                      key={i}
+                      onClick={handleNavigate(asset, network)}
                     >
-                        <Grid container rowSpacing={1} columnSpacing={{ xs: 3, sm: 2, md: 3 }}>
+                      <Card
+                        elevation={24}
+                        sx={{
+                          backgroundColor: '#1e1e1e',
+                          color: 'text.primary',
+                          p: 2,
+                          cursor: 'pointer',
+                          '&:hover img': {
+                            animation: `${rotate} 2s linear infinite`,
+                          },
+                          transition: 'transform 0.3s ease-in-out',
+                          '&:hover': {
+                            transform: 'scale(1.1)',
+                            transformOrigin: 'center',
+                          },
+                        }}
+                      >
+                        <Grid
+                          container
+                          rowSpacing={1}
+                          columnSpacing={{ xs: 3, sm: 2, md: 3 }}
+                        >
                           <Grid xs={4}>
                             <Box
-                                sx={{
-                                  height: '50px',
-                                  width: 'auto',
-                                  borderRadius: '50%',
-                                }}
-                                component="img"
-                                alt="Crypto currency icon"
-                                src={network.icon_url}
+                              sx={{
+                                height: '50px',
+                                width: 'auto',
+                                borderRadius: '50%',
+                              }}
+                              component="img"
+                              alt="Crypto currency icon"
+                              src={network.icon_url}
                             />
                           </Grid>
-                          <Grid xs={8} alignItems={"center"}>
+
+                          <Grid xs={8} alignItems="center">
                             <Box
-                                sx={{
-                                  typography: 'h6',
-                                }}
-                            >{asset.currency_symbol}</Box>
+                              sx={{
+                                typography: 'h6',
+                              }}
+                            >
+                              {asset.currency_symbol}
+                            </Box>
+
                             <Box>({asset.currency_name})</Box>
                           </Grid>
                         </Grid>
-                      <Stack
-                        alignItems="start"
-                        spacing={3}
-                        sx={{
-                          color: '#9dfe1f',
-                          '& .MuiBox-root': { mt: 3 } }}
-                      >
-                        <Box>{network.network_name}</Box>
-                      </Stack>
-                    </Card>
-                  </Grid>
-                ))
-              )
-            : search && (
-                <Stack
-                  alignItems="center"
-                  justifyContent="center"
-                  sx={{ height: '200px', width: 1 }}
-                >
-                  Not found
-                </Stack>
-              )}
-        </Grid>
+                        <Stack
+                          alignItems="start"
+                          spacing={3}
+                          sx={{
+                            color: '#9dfe1f',
+                            '& .MuiBox-root': { mt: 3 },
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              borderRadius: 6,
+                              // border: '1px solid #9dfe1f',
+                              opacity: 0.7,
+                              backgroundColor: 'rgb(2,0,36)',
+                              px: 1,
+                              py: 1,
+                              color: '#9dfe1f',
+                              // background: 'rgb(2,0,36)',
+                              background:
+                                'linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(143,175,114,1) 99%, rgba(255,255,255,1) 100%)',
+
+                              // background:
+                              //   'linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(138,254,31,1) 35%, rgba(0,212,255,1) 100%)',
+                            }}
+                          >
+                            {network.network_name}
+                          </Box>
+                        </Stack>
+                      </Card>
+                    </Grid>
+                  ))
+                )
+              : search && (
+                  <Stack
+                    alignItems="center"
+                    justifyContent="center"
+                    sx={{ height: '200px', width: 1 }}
+                  >
+                    Not found
+                  </Stack>
+                )}
+          </Grid>
+        </Box>
       )}
     </AppLayout>
   )

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { AxiosError } from 'axios'
 
 // @mui
 import {
@@ -25,7 +26,6 @@ import { useAssetContext } from 'src/views/context/AssetContext'
 
 // api
 import { buyCryptoApi } from 'src/web-api-client'
-import { AxiosError } from 'axios'
 
 interface CustomError {
   error: {
@@ -51,17 +51,13 @@ const Asset: React.FC = () => {
   const navigate = useNavigate()
 
   const getValidationError = useCallback(() => {
-    if (!asset) return ''
+    if (!asset || !amount) return ''
 
-    if (amount) {
-      if (+amount < asset.min_amount_collection['USD'])
-        return `Amount should be more than $${asset.min_amount_collection['USD']}`
+    if (+amount < asset.min_amount_collection['USD'])
+      return `Amount should be more than $${asset.min_amount_collection['USD']}`
 
-      if (+amount > asset.max_amount_collection['USD'])
-        return `Amount should be less than $${asset.max_amount_collection['USD']}`
-    }
-
-    return ''
+    if (+amount > asset.max_amount_collection['USD'])
+      return `Amount should be less than $${asset.max_amount_collection['USD']}`
   }, [amount, asset])
 
   const isBuyDisabled = useMemo(
@@ -119,8 +115,8 @@ const Asset: React.FC = () => {
         <IconButton
           onClick={() => navigate('/')}
           sx={{
-              color: 'text.primary',
-              typography: 'subtitle2',
+            color: 'text.primary',
+            typography: 'subtitle2',
           }}
         >
           <Icon icon="eva:arrow-ios-back-fill" />{' '}
@@ -187,10 +183,6 @@ const Asset: React.FC = () => {
                 p: 0.5,
                 mt: 1,
                 backgroundColor: 'background.paper',
-                // borderRadius: '25px',
-                '& .Mui-focused': {
-                  borderRadius: '25px',
-                },
               },
             }}
             error={!!getValidationError()}
@@ -245,7 +237,6 @@ const Asset: React.FC = () => {
               '&:hover': { borderColor: 'text.primary', opacity: 0.8 },
               mt: 3,
               '&.Mui-disabled': {
-                // marginTop: '50px',
                 borderColor: '#9dfe1f',
                 opacity: 0.6,
                 color: 'text.primary',
