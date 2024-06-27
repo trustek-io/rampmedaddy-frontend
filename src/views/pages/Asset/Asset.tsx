@@ -118,7 +118,10 @@ const Asset: React.FC = () => {
       <Stack alignItems="flex-start">
         <IconButton
           onClick={() => navigate('/')}
-          sx={{ color: 'text.primary' }}
+          sx={{
+              color: 'text.primary',
+              typography: 'subtitle2',
+          }}
         >
           <Icon icon="eva:arrow-ios-back-fill" />{' '}
           <Typography component="span" variant="body2">
@@ -128,7 +131,7 @@ const Asset: React.FC = () => {
       </Stack>
 
       <Typography sx={{ mt: 3 }}>
-        How much {asset?.currency_name} would you like?
+        How much {asset?.currency_symbol} would you like?
       </Typography>
 
       <Stack sx={{ px: 2 }}>
@@ -144,6 +147,7 @@ const Asset: React.FC = () => {
             value={formatNumber(amount)}
             fullWidth
             autoFocus
+            variant="outlined"
             type="text"
             inputProps={{ sx: { color: 'text.primary' } }}
             onChange={(event) => {
@@ -183,7 +187,7 @@ const Asset: React.FC = () => {
                 p: 0.5,
                 mt: 1,
                 backgroundColor: 'background.paper',
-                borderRadius: '25px',
+                // borderRadius: '25px',
                 '& .Mui-focused': {
                   borderRadius: '25px',
                 },
@@ -199,6 +203,7 @@ const Asset: React.FC = () => {
           <TextField
             placeholder="Wallet address"
             fullWidth
+            variant="outlined"
             value={wallet}
             onChange={(event) => {
               setHasError(false)
@@ -208,20 +213,12 @@ const Asset: React.FC = () => {
             InputProps={{
               sx: {
                 backgroundColor: 'background.paper',
-                borderRadius: '25px',
-                '& .Mui-focused': {
-                  borderRadius: '25px',
-                },
               },
             }}
             sx={{
               mt: 2,
               '&.MuiFormLabel-root': { color: 'text.primary' },
               backgroundColor: 'background.paper',
-              borderRadius: '25px',
-              '& .Mui-focused': {
-                borderRadius: '25px',
-              },
             }}
             InputLabelProps={{
               shrink: true,
@@ -243,18 +240,19 @@ const Asset: React.FC = () => {
             type="submit"
             sx={{
               color: 'text.primary',
-              borderColor: 'text.primary',
+              borderColor: '#9dfe1f',
               '&:focused': { borderColor: 'text.primary' },
               '&:hover': { borderColor: 'text.primary', opacity: 0.8 },
               mt: 3,
               '&.Mui-disabled': {
-                borderColor: 'text.primary',
+                // marginTop: '50px',
+                borderColor: '#9dfe1f',
                 opacity: 0.6,
                 color: 'text.primary',
               },
             }}
           >
-            Buy {asset?.currency_name}
+            Buy {asset?.currency_symbol}
           </Button>
         </form>
       </Stack>

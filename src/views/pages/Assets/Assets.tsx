@@ -110,12 +110,9 @@ const Assets: React.FC = () => {
         autoFocus
         value={search}
         placeholder="Search"
+        variant="outlined"
         sx={{
           backgroundColor: 'background.paper',
-          borderRadius: '25px',
-          '& .Mui-focused': {
-            borderRadius: '25px',
-          },
         }}
         onChange={(event) => setSearch(event.target.value)}
         inputProps={{ sx: { color: 'text.primary' } }}
@@ -158,12 +155,11 @@ const Assets: React.FC = () => {
             ? filteredAssets.map((asset) =>
                 asset.support_networks.map((network, i) => (
                   <Grid xs={6} key={i} onClick={handleNavigate(asset, network)}>
-                    <Card
+                    <Card elevation={24}
                       sx={{
-                        backgroundColor: '#000',
+                        backgroundColor: '#1e1e1e',
                         color: 'text.primary',
                         p: 2,
-                        borderRadius: '30px',
                         cursor: 'pointer',
                         '&:hover img': {
                           animation: `${rotate} 2s linear infinite`,
@@ -173,30 +169,37 @@ const Assets: React.FC = () => {
                           transform: 'scale(1.1)',
                           transformOrigin: 'center',
                         },
-                        boxShadow:
-                          'rgba(255, 255, 255, 0.3) 0px 19px 38px, rgba(255, 255, 255, 0.22) 0px 15px 12px',
                       }}
                     >
+                        <Grid container rowSpacing={1} columnSpacing={{ xs: 3, sm: 2, md: 3 }}>
+                          <Grid xs={4}>
+                            <Box
+                                sx={{
+                                  height: '50px',
+                                  width: 'auto',
+                                  borderRadius: '50%',
+                                }}
+                                component="img"
+                                alt="Crypto currency icon"
+                                src={network.icon_url}
+                            />
+                          </Grid>
+                          <Grid xs={8} alignItems={"center"}>
+                            <Box
+                                sx={{
+                                  typography: 'h6',
+                                }}
+                            >{asset.currency_symbol}</Box>
+                            <Box>({asset.currency_name})</Box>
+                          </Grid>
+                        </Grid>
                       <Stack
-                        alignItems="center"
+                        alignItems="start"
                         spacing={3}
-                        sx={{ '& .MuiBox-root': { mt: 1 } }}
+                        sx={{
+                          color: '#9dfe1f',
+                          '& .MuiBox-root': { mt: 3 } }}
                       >
-                        <Box
-                          sx={{
-                            height: '50px',
-                            width: 'auto',
-                            borderRadius: '50%',
-                          }}
-                          component="img"
-                          alt="Crypto currency icon"
-                          src={network.icon_url}
-                        />
-
-                        <Box>{asset.currency_name}</Box>
-
-                        <Box>({asset.currency_symbol})</Box>
-
                         <Box>{network.network_name}</Box>
                       </Stack>
                     </Card>
