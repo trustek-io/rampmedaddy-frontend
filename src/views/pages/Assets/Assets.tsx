@@ -183,6 +183,7 @@ const Assets: React.FC = () => {
                           container
                           rowSpacing={1}
                           columnSpacing={{ xs: 3, sm: 2, md: 3 }}
+                          sx={{ wordBreak: 'break-all' }}
                         >
                           <Grid xs={4}>
                             <Box
@@ -215,23 +216,12 @@ const Assets: React.FC = () => {
                           sx={{
                             color: '#9dfe1f',
                             '& .MuiBox-root': { mt: 3 },
+                            // wordBreak: 'break-all',
                           }}
                         >
                           <Box
                             sx={{
-                              borderRadius: 6,
-                              // border: '1px solid #9dfe1f',
-                              opacity: 0.7,
-                              backgroundColor: 'rgb(2,0,36)',
-                              px: 1,
-                              py: 1,
                               color: '#9dfe1f',
-                              // background: 'rgb(2,0,36)',
-                              background:
-                                'linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(143,175,114,1) 99%, rgba(255,255,255,1) 100%)',
-
-                              // background:
-                              //   'linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(138,254,31,1) 35%, rgba(0,212,255,1) 100%)',
                             }}
                           >
                             {network.network_name}
