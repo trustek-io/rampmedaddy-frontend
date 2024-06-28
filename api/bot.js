@@ -20,9 +20,7 @@ To get started, please enter your invite code.`)
 })
 
 bot.hears(INVITE_CODE, (ctx) => {
-  console.log(web_link)
   if (ctx.session.step === 'awaiting_code') {
-    console.log('>>>ctx.session.step', ctx.session.step)
     ctx.session.step = 'code_correct'
     ctx.reply('Welcome!', {
       reply_markup: {
@@ -31,7 +29,7 @@ bot.hears(INVITE_CODE, (ctx) => {
             {
               text: 'Launch',
               web_app: {
-                url: 'https://rampmedaddy-frontend-rust.vercel.app/',
+                url: web_link,
               },
             },
           ],
