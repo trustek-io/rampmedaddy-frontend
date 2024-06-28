@@ -1,9 +1,9 @@
 import { Telegraf } from 'telegraf'
 
-const TOKEN = '7451011598:AAFyv8V41N2weCc_JsfspChpTd4AsguoKds'
+const TOKEN = process.env.REACT_APP_TOKEN
 const bot = new Telegraf(TOKEN)
 
-const web_link = 'https://rampmedaddy-frontend-rust.vercel.app/'
+const web_link = process.env.REACT_APP_WEB_LINK
 
 bot.start((ctx) =>
   ctx.reply('Welcome to RampMeDaddy!', {
