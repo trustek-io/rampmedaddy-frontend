@@ -193,7 +193,7 @@ const Asset: React.FC = () => {
           />
 
           <TextField
-            placeholder="Wallet address"
+            placeholder="Receiving wallet"
             fullWidth
             variant="outlined"
             value={wallet}
