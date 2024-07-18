@@ -38,7 +38,10 @@ interface CustomError {
   }
 }
 
-const URL = 'https://rampmedaddy-frontend-rust.vercel.app/'
+const URL =
+  process.env.NODE_ENV === 'development'
+    ? 'http://localhost:3000/'
+    : process.env.REACT_APP_REDIRECT_URL
 
 const Asset: React.FC = () => {
   const [amount, setAmount] = useState<string>('')
@@ -81,8 +84,8 @@ const Asset: React.FC = () => {
           order_currency: asset.currency_symbol,
           network: asset.support_networks[0].network_name,
           wallet_address: wallet,
-          return_url: URL,
-          cancel_url: URL,
+          return_url: URL!,
+          cancel_url: URL!,
         })
 
         setRedirectUrl(response.redirect_url)
