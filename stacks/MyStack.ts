@@ -2,20 +2,25 @@ import { StackContext, StaticSite } from "sst/constructs";
 import { HostedZone } from "aws-cdk-lib/aws-route53";
 
 export function API({ stack }: StackContext) {
-  const domainsMapping: {[key: string]: string;} = {
+  const domainsMapping: { [key: string]: string; } = {
     staging: 'rampmedaddy-staging.trustek.io',
     production: 'rampmedaddy.trustek.io',
   }
-  const cryptoComKeys: {[key: string]: string;} = {
+  const cryptoComKeys: { [key: string]: string; } = {
     staging: 'pk_test_VyzWBzcYZkKxeFg5H5Srjr7t',
     production: 'pk_live_35juVapmZ6a3bbnGWm69XyYh',
+  }
+  const redirectUrlKeys: { [key: string]: string; } = {
+    staging: 'https://rampmedaddy-staging.trustek.io',
+    production: 'https://rampmedaddy.trustek.io',
   }
   const site = new StaticSite(stack, "ReactSite", {
     path: "packages/frontend",
     buildCommand: "npm run build",
     buildOutput: "build",
     environment: {
-      REACT_APP_CRYPTO_COM_TOKEN: cryptoComKeys[stack.stage]
+      REACT_APP_CRYPTO_COM_TOKEN: cryptoComKeys[stack.stage],
+      REACT_APP_REDIRECT_URL: redirectUrlKeys[stack.stage]
     },
     customDomain: {
       domainName: domainsMapping[stack.stage],
@@ -25,9 +30,10 @@ export function API({ stack }: StackContext) {
           zoneName: "trustek.io",
         }),
       },
-  }});
+    }
+  });
 
-// Show the URLs in the output
+  // Show the URLs in the output
   stack.addOutputs({
     SiteUrl: site.url,
   });

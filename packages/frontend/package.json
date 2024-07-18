@@ -6,7 +6,8 @@
     "start": "react-scripts start",
     "start_sst": "sst bind react-scripts start",
     "build": "react-scripts build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prettier": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\""
   },
   "devDependencies": {
     "vitest": "^1.6.0",
