@@ -1,10 +1,13 @@
 import numeral from 'numeral'
 
-import { Asset } from 'src/web-api-client'
+import { Crypto } from 'src/web-api-client'
 
-export const getFilteredAssets = (assets: Asset[], query: string): Asset[] => {
+export const getFilteredAssets = (
+  assets: Crypto[],
+  query: string
+): Crypto[] => {
   return assets.filter((asset) =>
-    `${asset.currency_name.toLowerCase()}${asset.currency_symbol.toLowerCase()}`.includes(
+    `${asset.name.toLowerCase()}${asset.symbol.toLowerCase()}`.includes(
       query.replaceAll(/\s/g, '').toLowerCase()
     )
   )

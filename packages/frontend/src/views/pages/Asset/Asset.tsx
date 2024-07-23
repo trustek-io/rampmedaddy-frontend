@@ -25,7 +25,7 @@ import AppLayout from 'src/views/templates/AppLayout'
 import { useAssetContext } from 'src/views/context/AssetContext'
 
 // api
-import { buyCryptoApi } from 'src/web-api-client'
+import { buyCryptoApi, BuyQuote, getBuyQuotesApi } from 'src/web-api-client'
 
 interface CustomError {
   error: {
@@ -49,18 +49,39 @@ const Asset: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [hasError, setHasError] = useState<boolean>(false)
   const [redirectUrl, setRedirectUrl] = useState<string>('')
+  const [buyQuotes, setBuyQuotes] = useState<BuyQuote[]>([])
 
   const { asset } = useAssetContext()
   const navigate = useNavigate()
 
+  const getBuyQuotes = useCallback(async () => {
+    if (!amount || !asset || !wallet) return
+
+    setIsLoading(true)
+    try {
+      const buyQuotes = await getBuyQuotesApi({
+        sourceCurrency: 'USD',
+        destinationCurrency: asset.code,
+        amount,
+        walletAddress: wallet,
+      })
+
+      setBuyQuotes(buyQuotes)
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [amount, asset, wallet])
+
   const getValidationError = useCallback(() => {
     if (!asset || !amount) return ''
 
-    if (+amount < asset.min_amount_collection['USD'])
-      return `Amount should be more than $${asset.min_amount_collection['USD']}`
+    // if (+amount < asset.min_amount_collection['USD'])
+    //   return `Amount should be more than $${asset.min_amount_collection['USD']}`
 
-    if (+amount > asset.max_amount_collection['USD'])
-      return `Amount should be less than $${asset.max_amount_collection['USD']}`
+    // if (+amount > asset.max_amount_collection['USD'])
+    //   return `Amount should be less than $${asset.max_amount_collection['USD']}`
   }, [amount, asset])
 
   const isBuyDisabled = useMemo(
@@ -77,18 +98,19 @@ const Asset: React.FC = () => {
       event.preventDefault()
 
       setIsLoading(true)
-      try {
-        const response = await buyCryptoApi({
-          currency: 'USD',
-          fiat_amount: +amount * 100,
-          order_currency: asset.currency_symbol,
-          network: asset.support_networks[0].network_name,
-          wallet_address: wallet,
-          return_url: URL!,
-          cancel_url: URL!,
-        })
 
-        setRedirectUrl(response.redirect_url)
+      getBuyQuotes()
+      try {
+        // const response = await buyCryptoApi({
+        //   currency: 'USD',
+        //   fiat_amount: +amount * 100,
+        //   order_currency: asset.currency_symbol,
+        //   network: asset.support_networks[0].network_name,
+        //   wallet_address: wallet,
+        //   return_url: URL!,
+        //   cancel_url: URL!,
+        // })
+        // setRedirectUrl(response.redirect_url)
       } catch (errorResponse) {
         const error = (errorResponse as AxiosError).response?.data
         if (
@@ -130,7 +152,7 @@ const Asset: React.FC = () => {
       </Stack>
 
       <Typography sx={{ mt: 3 }}>
-        How much {asset?.currency_symbol} would you like?
+        How much {asset?.symbol} would you like?
       </Typography>
 
       <Stack sx={{ px: 2 }}>
@@ -187,12 +209,14 @@ const Asset: React.FC = () => {
                 mt: 1,
                 backgroundColor: 'background.paper',
               },
+              onBlur: getBuyQuotes,
             }}
             error={!!getValidationError()}
-            helperText={
-              getValidationError() ||
-              `Min amount $${asset?.min_amount_collection['USD']}`
-            }
+            // onBlur={getBuyQuotes}
+            // helperText={
+            //   getValidationError() ||
+            //   `Min amount $${asset?.min_amount_collection['USD']}`
+            // }
           />
 
           <TextField
@@ -246,7 +270,7 @@ const Asset: React.FC = () => {
               },
             }}
           >
-            Buy {asset?.currency_symbol}
+            Buy {asset?.symbol}
           </Button>
         </form>
       </Stack>

@@ -1,10 +1,17 @@
-import React, { createContext, useContext, useState } from 'react'
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react'
 
-import { Asset } from 'src/web-api-client'
+import { Crypto, getAssetsApi } from 'src/web-api-client'
 
 interface AssetContextType {
-  asset: Asset | null
-  setAsset: (asset: Asset | null) => void
+  asset: Crypto | null
+  assets: Crypto[]
+  setAsset: (asset: Crypto | null) => void
 }
 
 export const AssetContext = createContext<AssetContextType | null>(null)
@@ -18,10 +25,29 @@ export const useAssetContext = () => {
 }
 
 const AssetProvider = ({ children }: { children: React.ReactNode }) => {
-  const [asset, setAsset] = useState<Asset | null>(null)
+  const [asset, setAsset] = useState<Crypto | null>(null)
+  const [assets, setAssets] = useState<Crypto[]>([])
+
+  const getAssets = useCallback(async () => {
+    // setIsLoading(true)
+    try {
+      const response = await getAssetsApi()
+
+      setAssets(response.message.crypto)
+    } catch (error) {
+      console.log(error)
+    } finally {
+      // setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    getAssets()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
-    <AssetContext.Provider value={{ asset, setAsset }}>
+    <AssetContext.Provider value={{ asset, setAsset, assets }}>
       {children}
     </AssetContext.Provider>
   )

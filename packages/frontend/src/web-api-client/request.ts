@@ -17,7 +17,7 @@ const request = async <T>(config: AxiosRequestConfig): Promise<T> => {
 
 // Request interceptor
 axiosInstance.interceptors.request.use((config) => {
-  config.headers!['Authorization'] = `Bearer ${CRYPTO_COM_TOKEN}`
+  config.headers!['Authorization'] = `pk_prod_01J3CZHG87RNJV6K88PJ5G2VJK`
   return config
 })
 
