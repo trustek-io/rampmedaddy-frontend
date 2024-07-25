@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import debounce from 'lodash/debounce'
 
 // @mui
 import {
@@ -14,15 +15,12 @@ import {
 import Grid from '@mui/material/Unstable_Grid2'
 
 // api
-import { Asset, getAssetsApi, SupportNetwork } from 'src/web-api-client'
+import { Crypto } from 'src/web-api-client'
 
 // views
 import AppLayout from 'src/views/templates/AppLayout'
 import { useAssetContext } from 'src/views/context/AssetContext'
 import Icon from 'src/views/components/Icon'
-
-// hooks
-import { useDebounce } from 'src/hooks/use-debounce'
 
 // helpers
 import { getFilteredAssets } from 'src/common/helpers'
@@ -50,58 +48,38 @@ const rotate = keyframes`
 `
 
 const Assets: React.FC = () => {
-  const [assets, setAssets] = useState<Asset[]>([])
-  const [filteredAssets, setFilteredAssets] = useState<Asset[]>([])
   const [search, setSearch] = useState<string>('')
-  const [isLoading, setIsLoading] = useState<boolean>(false)
 
-  const debouncedQuery = useDebounce(search, 300)
-  const { setAsset } = useAssetContext()
+  const { setAsset, assets, isLoading } = useAssetContext()
   const navigate = useNavigate()
 
-  const getAssets = useCallback(async () => {
-    setIsLoading(true)
-    try {
-      const assets = await getAssetsApi()
-
-      setAssets(assets)
-    } catch (error) {
-      console.log(error)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
   const handleNavigate = useCallback(
-    (asset: Asset, network: SupportNetwork) => (): void => {
-      setAsset({ ...asset, support_networks: [network] })
+    (asset: Crypto) => (): void => {
+      setAsset(asset)
       navigate('/asset')
     },
     [setAsset, navigate]
   )
 
   const clear = useCallback(() => {
-    setFilteredAssets(assets)
     setSearch('')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  useEffect(() => {
-    getAssets()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const filteredAssetsRef = useRef(assets)
 
-  useEffect(() => {
-    setFilteredAssets(assets)
-  }, [assets])
+  const filteredAssets = useMemo(() => {
+    if (!search) {
+      filteredAssetsRef.current = assets
+      return assets
+    }
 
-  useEffect(() => {
-    if (!debouncedQuery) setFilteredAssets(assets)
-
-    const filteredAssets = getFilteredAssets(assets, debouncedQuery)
-    setFilteredAssets(filteredAssets)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedQuery])
+    const newFilteredAssets = getFilteredAssets(
+      filteredAssetsRef.current,
+      search
+    )
+    filteredAssetsRef.current = newFilteredAssets
+    return newFilteredAssets
+  }, [assets, search])
 
   return (
     <AppLayout>
@@ -116,7 +94,7 @@ const Assets: React.FC = () => {
         onChange={(event) => setSearch(event.target.value)}
         inputProps={{ sx: { color: 'text.primary' } }}
         InputProps={{
-          endAdornment: !!debouncedQuery && (
+          endAdornment: !!search && (
             <Button
               onClick={clear}
               sx={{ minWidth: 'unset', p: 0 }}
@@ -155,82 +133,75 @@ const Assets: React.FC = () => {
             }}
           >
             {filteredAssets.length
-              ? filteredAssets.map((asset) =>
-                  asset.support_networks.map((network, i) => (
-                    <Grid
-                      xs={6}
-                      key={i}
-                      onClick={handleNavigate(asset, network)}
+              ? filteredAssets.map((asset) => (
+                  <Grid xs={6} key={asset.id} onClick={handleNavigate(asset)}>
+                    <Card
+                      elevation={24}
+                      sx={{
+                        backgroundColor: '#1e1e1e',
+                        color: 'text.primary',
+                        p: 2,
+                        cursor: 'pointer',
+                        '&:hover img': {
+                          animation: `${rotate} 2s linear infinite`,
+                        },
+                        transition: 'transform 0.3s ease-in-out',
+                        '&:hover': {
+                          transform: 'scale(1.1)',
+                          transformOrigin: 'center',
+                        },
+                      }}
                     >
-                      <Card
-                        elevation={24}
-                        sx={{
-                          backgroundColor: '#1e1e1e',
-                          color: 'text.primary',
-                          p: 2,
-                          cursor: 'pointer',
-                          '&:hover img': {
-                            animation: `${rotate} 2s linear infinite`,
-                          },
-                          transition: 'transform 0.3s ease-in-out',
-                          '&:hover': {
-                            transform: 'scale(1.1)',
-                            transformOrigin: 'center',
-                          },
-                        }}
+                      <Grid
+                        container
+                        rowSpacing={1}
+                        columnSpacing={{ xs: 3, sm: 2, md: 3 }}
+                        sx={{ wordBreak: 'break-all' }}
                       >
-                        <Grid
-                          container
-                          rowSpacing={1}
-                          columnSpacing={{ xs: 3, sm: 2, md: 3 }}
-                          sx={{ wordBreak: 'break-all' }}
-                        >
-                          <Grid xs={4}>
-                            <Box
-                              sx={{
-                                height: '50px',
-                                width: 'auto',
-                                borderRadius: '50%',
-                              }}
-                              component="img"
-                              alt="Crypto currency icon"
-                              src={network.icon_url}
-                            />
-                          </Grid>
-
-                          <Grid xs={8} alignItems="center">
-                            <Box
-                              sx={{
-                                typography: 'h6',
-                              }}
-                            >
-                              {asset.currency_symbol}
-                            </Box>
-
-                            <Box>({asset.currency_name})</Box>
-                          </Grid>
-                        </Grid>
-                        <Stack
-                          alignItems="start"
-                          spacing={3}
-                          sx={{
-                            color: '#9dfe1f',
-                            '& .MuiBox-root': { mt: 3 },
-                            // wordBreak: 'break-all',
-                          }}
-                        >
+                        <Grid xs={4}>
                           <Box
                             sx={{
-                              color: '#9dfe1f',
+                              height: '50px',
+                              width: 'auto',
+                              borderRadius: '50%',
+                            }}
+                            component="img"
+                            alt="Crypto currency icon"
+                            src={asset.icon}
+                          />
+                        </Grid>
+
+                        <Grid xs={8} alignItems="center">
+                          <Box
+                            sx={{
+                              typography: 'h6',
                             }}
                           >
-                            {network.network_name}
+                            {asset.code}
                           </Box>
-                        </Stack>
-                      </Card>
-                    </Grid>
-                  ))
-                )
+
+                          <Box>({asset.name})</Box>
+                        </Grid>
+                      </Grid>
+                      <Stack
+                        alignItems="start"
+                        spacing={3}
+                        sx={{
+                          color: '#9dfe1f',
+                          '& .MuiBox-root': { mt: 3 },
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            color: '#9dfe1f',
+                          }}
+                        >
+                          {asset.networkDisplayName}
+                        </Box>
+                      </Stack>
+                    </Card>
+                  </Grid>
+                ))
               : search && (
                   <Stack
                     alignItems="center"

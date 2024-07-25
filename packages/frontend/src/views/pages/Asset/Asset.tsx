@@ -4,18 +4,22 @@ import { AxiosError } from 'axios'
 
 // @mui
 import {
+  Autocomplete,
   Box,
   Button,
   FormHelperText,
   IconButton,
   InputAdornment,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   TextField,
   Typography,
 } from '@mui/material'
 
 // helpers
-import { formatNumber } from 'src/common/helpers'
+import { formatNumber, getPaymentMethodOptions } from 'src/common/helpers'
 
 // views
 import Icon from 'src/views/components/Icon'
@@ -25,7 +29,23 @@ import AppLayout from 'src/views/templates/AppLayout'
 import { useAssetContext } from 'src/views/context/AssetContext'
 
 // api
-import { buyCryptoApi } from 'src/web-api-client'
+import {
+  buyCryptoApi,
+  BuyQuote,
+  getBuyQuotesApi,
+  Limit,
+} from 'src/web-api-client'
+import { useDebounce } from 'src/hooks/use-debounce'
+
+export interface PaymentMethodOption {
+  name: string
+  rate: number
+  limits: Limit
+  quoteId: string
+  paymentMethod: string
+  icon: string
+  ramp: string
+}
 
 interface CustomError {
   error: {
@@ -49,18 +69,53 @@ const Asset: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [hasError, setHasError] = useState<boolean>(false)
   const [redirectUrl, setRedirectUrl] = useState<string>('')
+  const [paymentMethodOptions, setPaymentMethodOptions] = useState<
+    PaymentMethodOption[]
+  >([])
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<PaymentMethodOption | null>(null)
+
+  useEffect(() => {
+    setSelectedPaymentMethod(paymentMethodOptions[0])
+  }, [paymentMethodOptions])
+
+  const debouncedAmount = useDebounce(amount, 300)
+
+  console.log(paymentMethodOptions)
 
   const { asset } = useAssetContext()
   const navigate = useNavigate()
 
+  const getBuyQuotes = useCallback(
+    async (amount: string) => {
+      if (!amount || !asset) return
+
+      setIsLoading(true)
+      try {
+        const buyQuotes = await getBuyQuotesApi({
+          sourceCurrency: 'usd',
+          destinationCurrency: asset.code.toLowerCase(),
+          amount,
+        })
+
+        setPaymentMethodOptions(getPaymentMethodOptions(buyQuotes))
+      } catch (error) {
+        console.log(error)
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [amount, asset]
+  )
+
   const getValidationError = useCallback(() => {
     if (!asset || !amount) return ''
 
-    if (+amount < asset.min_amount_collection['USD'])
-      return `Amount should be more than $${asset.min_amount_collection['USD']}`
+    // if (+amount < asset.min_amount_collection['USD'])
+    //   return `Amount should be more than $${asset.min_amount_collection['USD']}`
 
-    if (+amount > asset.max_amount_collection['USD'])
-      return `Amount should be less than $${asset.max_amount_collection['USD']}`
+    // if (+amount > asset.max_amount_collection['USD'])
+    //   return `Amount should be less than $${asset.max_amount_collection['USD']}`
   }, [amount, asset])
 
   const isBuyDisabled = useMemo(
@@ -77,18 +132,31 @@ const Asset: React.FC = () => {
       event.preventDefault()
 
       setIsLoading(true)
+
+      console.log('selectedPaymentMethod', selectedPaymentMethod)
+
       try {
         const response = await buyCryptoApi({
-          currency: 'USD',
-          fiat_amount: +amount * 100,
-          order_currency: asset.currency_symbol,
-          network: asset.support_networks[0].network_name,
-          wallet_address: wallet,
-          return_url: URL!,
-          cancel_url: URL!,
+          source: 'usd',
+          destination: asset.code,
+          amount: +amount,
+          type: 'buy',
+          paymentMethod: selectedPaymentMethod?.paymentMethod!,
+          wallet,
+          onramp: selectedPaymentMethod?.ramp!,
+          supportedParams: {
+            partnerData: {
+              redirectUrl: {
+                success: 'https://rampmedaddy-staging.trustek.io/',
+                failure: 'https://rampmedaddy-staging.trustek.io/',
+              },
+            },
+          },
+          metaData: {
+            quoteId: selectedPaymentMethod?.quoteId!,
+          },
         })
-
-        setRedirectUrl(response.redirect_url)
+        setRedirectUrl(response.message.transactionInformation.url)
       } catch (errorResponse) {
         const error = (errorResponse as AxiosError).response?.data
         if (
@@ -112,6 +180,10 @@ const Asset: React.FC = () => {
     if (redirectUrl) window.location.href = redirectUrl
   }, [redirectUrl])
 
+  useEffect(() => {
+    getBuyQuotes(debouncedAmount)
+  }, [debouncedAmount])
+
   return (
     <AppLayout>
       <Stack alignItems="flex-start">
@@ -130,7 +202,7 @@ const Asset: React.FC = () => {
       </Stack>
 
       <Typography sx={{ mt: 3 }}>
-        How much {asset?.currency_symbol} would you like?
+        How much {asset?.name} would you like?
       </Typography>
 
       <Stack sx={{ px: 2 }}>
@@ -189,10 +261,11 @@ const Asset: React.FC = () => {
               },
             }}
             error={!!getValidationError()}
-            helperText={
-              getValidationError() ||
-              `Min amount $${asset?.min_amount_collection['USD']}`
-            }
+            // onBlur={getBuyQuotes}
+            // helperText={
+            //   getValidationError() ||
+            //   `Min amount $${asset?.min_amount_collection['USD']}`
+            // }
           />
 
           <TextField
@@ -229,6 +302,58 @@ const Asset: React.FC = () => {
             </FormHelperText>
           )}
 
+          <Autocomplete
+            disabled={!debouncedAmount || !paymentMethodOptions.length}
+            disableClearable
+            fullWidth
+            defaultValue={paymentMethodOptions[0]}
+            value={paymentMethodOptions[0]}
+            options={paymentMethodOptions}
+            getOptionLabel={(option) => option.name}
+            isOptionEqualToValue={(option) =>
+              option.name === selectedPaymentMethod?.name
+            }
+            renderInput={(params) => (
+              <TextField
+                label="From"
+                {...params}
+                inputProps={{
+                  ...params.inputProps,
+                  sx: { color: 'text.primary' },
+                }}
+                InputProps={{
+                  ...params.InputProps,
+                  sx: {
+                    backgroundColor: 'background.paper',
+                  },
+                }}
+                sx={{
+                  mt: 2,
+                  '&.MuiFormLabel-root': { color: 'text.primary' },
+                  backgroundColor: 'background.paper',
+                }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: {
+                    color: 'text.primary',
+                    '&.Mui-focused': { color: 'text.primary' },
+                  },
+                }}
+              />
+            )}
+            renderOption={(props, option) => (
+              <li {...props} key={option.name}>
+                <Icon icon={option.icon} sx={{ color: 'text.primary' }} />{' '}
+                {option.name}
+              </li>
+            )}
+            onChange={(_e, value) => {
+              if (value) {
+                setSelectedPaymentMethod(value)
+              }
+            }}
+          />
+
           <Button
             variant="outlined"
             disabled={isBuyDisabled}
@@ -246,7 +371,7 @@ const Asset: React.FC = () => {
               },
             }}
           >
-            Buy {asset?.currency_symbol}
+            Buy {asset?.code}
           </Button>
         </form>
       </Stack>
