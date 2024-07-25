@@ -158,18 +158,18 @@ const Asset: React.FC = () => {
         })
         setRedirectUrl(response.message.transactionInformation.url)
       } catch (errorResponse) {
-        const error = (errorResponse as AxiosError).response?.data
-        if (
-          (error as CustomError).error.param.wallet_address[0] ===
-          'invalid format'
-        )
-          setHasError(true)
+        // const error = (errorResponse as AxiosError).response?.data
+        // if (
+        //   (error as CustomError).error.param.wallet_address[0] ===
+        //   'invalid format'
+        // )
+        //   setHasError(true)
       } finally {
         setIsLoading(false)
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isBuyDisabled, asset, amount]
+    [isBuyDisabled, asset, amount, selectedPaymentMethod]
   )
 
   useEffect(() => {
