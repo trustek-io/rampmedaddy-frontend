@@ -4,13 +4,24 @@ export interface BuyQuotesArgs {
   sourceCurrency: string
   destinationCurrency: string
   amount: string
-  walletAddress: string
+}
+
+export interface Limit {
+  max: number
+  min: number
 }
 
 export interface AvailablePaymentMethod {
   paymentTypeId: string
   name: string
   icon: string
+  details: {
+    currencyStatus: string
+    limits: {
+      aggregatedLimit: Limit
+      banxa: Limit
+    }
+  }
 }
 
 export interface BuyQuote {
@@ -32,15 +43,14 @@ export interface BuyQuote {
   ]
 }
 
-
 export const getBuyQuotesApi = async ({
   sourceCurrency,
   destinationCurrency,
-  amount, walletAddress
+  amount,
 }: BuyQuotesArgs): Promise<BuyQuote[]> =>
   request({
     method: 'GET',
     // url: `${BASE_URL}/crypto_purchases/${sourceCurrency}/${destinationCurrency}`,
     url: `https://api.onramper.com/quotes/${sourceCurrency}/${destinationCurrency}`,
-    params: { amount, walletAddress }
+    params: { amount },
   })

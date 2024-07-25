@@ -1,19 +1,24 @@
 import request, { BASE_URL } from './request'
 
 export interface BuyCryptoArgs {
-  onramp: string
   source: string
+  onramp: string
   destination: string
   amount: number
   type: string
   paymentMethod: string
-  network: string
-  uuid: string
-  originatingHost: string
-  partnerContext: string
-  wallet: { address: string }
+  network?: string
+  wallet: string | null
   supportedParams: {
-    partnerData: { redirectUrl: { success: string } }
+    partnerData: {
+      redirectUrl: {
+        success: string | null
+        failure: string | null
+      }
+    }
+  }
+  metaData: {
+    quoteId: string
   }
 }
 
@@ -22,28 +27,36 @@ export interface BuyCryptoResponse {
     validationInformation: boolean
     status: string
     sessionInformation: {
-      onramp: string
       source: string
       destination: string
       amount: number
       type: string
       paymentMethod: string
-      network: string
-      uuid: string
-      originatingHost: string
-      wallet: {
-        address: string
-      }
+      wallet: string
+      onramp: string
       supportedParams: {
         partnerData: {
           redirectUrl: {
             success: string
+            failure: string
           }
         }
       }
+      metaData: {
+        quoteId: string
+      }
       country: string
+      uuid: string
       expiringTime: number
       sessionId: string
+    }
+    transactionInformation: {
+      url: string
+      type: string
+      transactionId: string
+      params: {
+        permissions: string
+      }
     }
   }
 }
@@ -53,7 +66,6 @@ export const buyCryptoApi = async (
 ): Promise<BuyCryptoResponse> =>
   request({
     method: 'POST',
-    url: `${BASE_URL}/crypto_purchases`,
-    // https://api.onramper.com/checkout/intent
+    url: 'https://api.onramper.com/checkout/intent',
     data: args,
   })

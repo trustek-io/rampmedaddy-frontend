@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo } from 'react'
+import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import debounce from 'lodash/debounce'
 
@@ -15,7 +15,7 @@ import {
 import Grid from '@mui/material/Unstable_Grid2'
 
 // api
-import { Crypto, getAssetsApi } from 'src/web-api-client'
+import { Crypto } from 'src/web-api-client'
 
 // views
 import AppLayout from 'src/views/templates/AppLayout'
@@ -49,10 +49,8 @@ const rotate = keyframes`
 
 const Assets: React.FC = () => {
   const [search, setSearch] = useState<string>('')
-  const [debouncedSearch, setDebouncedSearch] = useState<string>('')
-  const [isLoading, setIsLoading] = useState<boolean>(false)
 
-  const { setAsset, assets } = useAssetContext()
+  const { setAsset, assets, isLoading } = useAssetContext()
   const navigate = useNavigate()
 
   const handleNavigate = useCallback(
@@ -65,26 +63,23 @@ const Assets: React.FC = () => {
 
   const clear = useCallback(() => {
     setSearch('')
-    setDebouncedSearch('')
   }, [])
 
-  const debouncedSetSearch = useMemo(
-    () =>
-      debounce((value: string) => {
-        setDebouncedSearch(value)
-      }, 300),
-    []
-  )
-
-  useEffect(() => {
-    debouncedSetSearch(search)
-  }, [search, debouncedSetSearch])
+  const filteredAssetsRef = useRef(assets)
 
   const filteredAssets = useMemo(() => {
-    if (!debouncedSearch) return assets
+    if (!search) {
+      filteredAssetsRef.current = assets
+      return assets
+    }
 
-    return getFilteredAssets(assets, debouncedSearch)
-  }, [assets, debouncedSearch])
+    const newFilteredAssets = getFilteredAssets(
+      filteredAssetsRef.current,
+      search
+    )
+    filteredAssetsRef.current = newFilteredAssets
+    return newFilteredAssets
+  }, [assets, search])
 
   return (
     <AppLayout>

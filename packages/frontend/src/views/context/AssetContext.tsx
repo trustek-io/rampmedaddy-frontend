@@ -12,6 +12,7 @@ interface AssetContextType {
   asset: Crypto | null
   assets: Crypto[]
   setAsset: (asset: Crypto | null) => void
+  isLoading: boolean
 }
 
 export const AssetContext = createContext<AssetContextType | null>(null)
@@ -27,9 +28,10 @@ export const useAssetContext = () => {
 const AssetProvider = ({ children }: { children: React.ReactNode }) => {
   const [asset, setAsset] = useState<Crypto | null>(null)
   const [assets, setAssets] = useState<Crypto[]>([])
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const getAssets = useCallback(async () => {
-    // setIsLoading(true)
+    setIsLoading(true)
     try {
       const response = await getAssetsApi()
 
@@ -37,7 +39,7 @@ const AssetProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error) {
       console.log(error)
     } finally {
-      // setIsLoading(false)
+      setIsLoading(false)
     }
   }, [])
 
@@ -47,7 +49,7 @@ const AssetProvider = ({ children }: { children: React.ReactNode }) => {
   }, [])
 
   return (
-    <AssetContext.Provider value={{ asset, setAsset, assets }}>
+    <AssetContext.Provider value={{ asset, setAsset, assets, isLoading }}>
       {children}
     </AssetContext.Provider>
   )
