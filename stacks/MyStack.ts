@@ -16,7 +16,7 @@ export function API({ stack }: StackContext) {
   }
   const site = new StaticSite(stack, "ReactSite", {
     path: "packages/frontend",
-    buildCommand: "CI=false npm run build",
+    buildCommand: "npm run build",
     buildOutput: "build",
     environment: {
       REACT_APP_CRYPTO_COM_TOKEN: cryptoComKeys[stack.stage],

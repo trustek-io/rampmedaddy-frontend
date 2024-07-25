@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AxiosError } from 'axios'
 
 // @mui
 import {
@@ -10,9 +9,6 @@ import {
   FormHelperText,
   IconButton,
   InputAdornment,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
   TextField,
   Typography,
@@ -29,12 +25,7 @@ import AppLayout from 'src/views/templates/AppLayout'
 import { useAssetContext } from 'src/views/context/AssetContext'
 
 // api
-import {
-  buyCryptoApi,
-  BuyQuote,
-  getBuyQuotesApi,
-  Limit,
-} from 'src/web-api-client'
+import { buyCryptoApi, getBuyQuotesApi, Limit } from 'src/web-api-client'
 import { useDebounce } from 'src/hooks/use-debounce'
 
 export interface PaymentMethodOption {
@@ -46,22 +37,6 @@ export interface PaymentMethodOption {
   icon: string
   ramp: string
 }
-
-interface CustomError {
-  error: {
-    type: string
-    code: string
-    param: {
-      [key: string]: string[]
-    }
-    error_message: string
-  }
-}
-
-const URL =
-  process.env.NODE_ENV === 'development'
-    ? 'http://localhost:3000/'
-    : process.env.REACT_APP_REDIRECT_URL
 
 const Asset: React.FC = () => {
   const [amount, setAmount] = useState<string>('')
@@ -169,7 +144,7 @@ const Asset: React.FC = () => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isBuyDisabled, asset, amount, selectedPaymentMethod]
+    [isBuyDisabled, asset, selectedPaymentMethod]
   )
 
   useEffect(() => {
@@ -182,7 +157,7 @@ const Asset: React.FC = () => {
 
   useEffect(() => {
     getBuyQuotes(debouncedAmount)
-  }, [debouncedAmount])
+  }, [debouncedAmount, getBuyQuotes])
 
   return (
     <AppLayout>

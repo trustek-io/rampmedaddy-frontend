@@ -1,4 +1,4 @@
-import request, { BASE_URL } from './request'
+import request from './request'
 
 export interface BuyQuotesArgs {
   sourceCurrency: string
