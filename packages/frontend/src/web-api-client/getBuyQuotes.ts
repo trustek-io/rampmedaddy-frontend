@@ -1,5 +1,13 @@
 import request from './request'
 
+export interface Error {
+  errorId: number
+  maxAmount?: number
+  message: string
+  minAmount?: number
+  type: string
+}
+
 export interface BuyQuotesArgs {
   sourceCurrency: string
   destinationCurrency: string
@@ -34,13 +42,7 @@ export interface BuyQuote {
   paymentMethod: string
   quoteId: string
   recommendations?: string[]
-  errors?: [
-    {
-      type: string
-      errorId: number
-      message: string
-    },
-  ]
+  errors?: Error[]
 }
 
 export const getBuyQuotesApi = async ({

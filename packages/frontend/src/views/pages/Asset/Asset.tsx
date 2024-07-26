@@ -3,23 +3,23 @@ import { useNavigate } from 'react-router-dom'
 
 // @mui
 import {
-  Autocomplete,
-  Box,
   Button,
+  CircularProgress,
   FormHelperText,
   IconButton,
-  InputAdornment,
   Stack,
-  TextField,
   Typography,
 } from '@mui/material'
 
 // helpers
-import { formatNumber, getPaymentMethodOptions } from 'src/common/helpers'
+import { getLimit, getPaymentMethodOptions } from 'src/common/helpers'
 
 // views
 import Icon from 'src/views/components/Icon'
 import AppLayout from 'src/views/templates/AppLayout'
+import AmountInput from './AmountInput'
+import WalletInput from './WalletInput'
+import PaymentMethodSelect from './PaymentMethodSelect'
 
 // context
 import { useAssetContext } from 'src/views/context/AssetContext'
@@ -39,11 +39,12 @@ export interface PaymentMethodOption {
 }
 
 const Asset: React.FC = () => {
-  const [amount, setAmount] = useState<string>('')
+  const [amount, setAmount] = useState<string>('200')
   const [wallet, setWallet] = useState<string>('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [hasError, setHasError] = useState<boolean>(false)
+  const [isQuotesFetching, setIsQuotesFetching] = useState<boolean>(false)
   const [redirectUrl, setRedirectUrl] = useState<string>('')
+  const [limit, setLimit] = useState<Limit | null>(null)
   const [paymentMethodOptions, setPaymentMethodOptions] = useState<
     PaymentMethodOption[]
   >([])
@@ -51,12 +52,17 @@ const Asset: React.FC = () => {
     useState<PaymentMethodOption | null>(null)
 
   useEffect(() => {
-    setSelectedPaymentMethod(paymentMethodOptions[0])
-  }, [paymentMethodOptions])
+    const recommended = paymentMethodOptions.filter((method) =>
+      Math.min(method.rate)
+    )[0]
+
+    if (recommended) setSelectedPaymentMethod(recommended)
+
+    if (!limit && !!paymentMethodOptions.length)
+      setLimit(getLimit(paymentMethodOptions))
+  }, [paymentMethodOptions, limit, setLimit])
 
   const debouncedAmount = useDebounce(amount, 300)
-
-  console.log(paymentMethodOptions)
 
   const { asset } = useAssetContext()
   const navigate = useNavigate()
@@ -65,7 +71,7 @@ const Asset: React.FC = () => {
     async (amount: string) => {
       if (!amount || !asset) return
 
-      setIsLoading(true)
+      setIsQuotesFetching(true)
       try {
         const buyQuotes = await getBuyQuotesApi({
           sourceCurrency: 'usd',
@@ -77,21 +83,24 @@ const Asset: React.FC = () => {
       } catch (error) {
         console.log(error)
       } finally {
-        setIsLoading(false)
+        setIsQuotesFetching(false)
       }
     },
-    [amount, asset]
+    [asset]
   )
 
+  useEffect(() => {
+    getBuyQuotes('200')
+  }, [getBuyQuotes])
+
   const getValidationError = useCallback(() => {
-    if (!asset || !amount) return ''
+    if (!paymentMethodOptions.length || !limit) return ''
 
-    // if (+amount < asset.min_amount_collection['USD'])
-    //   return `Amount should be more than $${asset.min_amount_collection['USD']}`
+    if (+amount < limit.min || +amount > limit.max)
+      return `Amount should be in between USD ${limit.min} and USD ${limit.max}`
 
-    // if (+amount > asset.max_amount_collection['USD'])
-    //   return `Amount should be less than $${asset.max_amount_collection['USD']}`
-  }, [amount, asset])
+    return ''
+  }, [paymentMethodOptions, limit, amount])
 
   const isBuyDisabled = useMemo(
     () => !wallet || !!getValidationError() || isLoading,
@@ -100,15 +109,12 @@ const Asset: React.FC = () => {
 
   const buyCrypto = useCallback(
     async (event: React.FormEvent) => {
-      setHasError(false)
       if (isBuyDisabled || !asset) return
 
       event.stopPropagation()
       event.preventDefault()
 
       setIsLoading(true)
-
-      console.log('selectedPaymentMethod', selectedPaymentMethod)
 
       try {
         const response = await buyCryptoApi({
@@ -132,13 +138,8 @@ const Asset: React.FC = () => {
           },
         })
         setRedirectUrl(response.message.transactionInformation.url)
-      } catch (errorResponse) {
-        // const error = (errorResponse as AxiosError).response?.data
-        // if (
-        //   (error as CustomError).error.param.wallet_address[0] ===
-        //   'invalid format'
-        // )
-        //   setHasError(true)
+      } catch (error) {
+        console.log(error)
       } finally {
         setIsLoading(false)
       }
@@ -182,151 +183,40 @@ const Asset: React.FC = () => {
 
       <Stack sx={{ px: 2 }}>
         <form onSubmit={buyCrypto}>
-          <TextField
-            placeholder="0.00"
-            sx={{
-              mt: 2,
-              '& .MuiFormHelperText-root': {
-                color: 'text.primary',
-              },
-            }}
-            value={formatNumber(amount)}
-            fullWidth
-            autoFocus
-            variant="outlined"
-            type="text"
-            inputProps={{ sx: { color: 'text.primary' } }}
-            onChange={(event) => {
-              setHasError(false)
-              if (event.target.value.includes('.')) {
-                const [amount, decimalValue] = event.target.value
-                  .replaceAll(',', '')
-                  .split('.')
-
-                setAmount(`${amount}.${decimalValue.slice(0, 2)}`)
-
-                return
-              }
-
-              setAmount(event.target.value.replaceAll(',', ''))
-            }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Box
-                    sx={{
-                      typography: 'subtitle2',
-                      py: '3px',
-                      px: '8px',
-                      borderRadius: '6px',
-                      fontWeight: 600,
-                      mr: 2,
-                      color: 'text.primary',
-                      fontSize: '22px',
-                    }}
-                  >
-                    | USD
-                  </Box>
-                </InputAdornment>
-              ),
-              sx: {
-                p: 0.5,
-                mt: 1,
-                backgroundColor: 'background.paper',
-              },
-            }}
-            error={!!getValidationError()}
-            // onBlur={getBuyQuotes}
-            // helperText={
-            //   getValidationError() ||
-            //   `Min amount $${asset?.min_amount_collection['USD']}`
-            // }
+          <AmountInput
+            onChange={setAmount}
+            amount={amount}
+            validationError={getValidationError()}
           />
 
-          <TextField
-            placeholder="Receiving wallet"
-            fullWidth
-            variant="outlined"
-            value={wallet}
-            onChange={(event) => {
-              setHasError(false)
-              setWallet(event.target.value)
-            }}
-            inputProps={{ sx: { color: 'text.primary' } }}
-            InputProps={{
-              sx: {
-                backgroundColor: 'background.paper',
-              },
-            }}
-            sx={{
-              mt: 2,
-              '&.MuiFormLabel-root': { color: 'text.primary' },
-              backgroundColor: 'background.paper',
-            }}
-            InputLabelProps={{
-              shrink: true,
-              sx: {
-                color: 'text.primary',
-                '&.Mui-focused': { color: 'text.primary' },
-              },
-            }}
-          />
-          {hasError && (
-            <FormHelperText error sx={{ px: 2, textAlign: 'center' }}>
-              Invalid wallet address
+          {!getValidationError() && (
+            <Typography align="left" variant="body2" color="text.disabled">
+              {isQuotesFetching && (
+                <>
+                  <CircularProgress size={13} sx={{ color: 'text.disabled' }} />{' '}
+                  Fetching best price...
+                </>
+              )}
+              {selectedPaymentMethod?.rate &&
+                !isQuotesFetching &&
+                `1 ${asset?.code} ≈ ${selectedPaymentMethod.rate.toFixed(2)} USD`}
+            </Typography>
+          )}
+
+          {!(paymentMethodOptions.length || isQuotesFetching) && (
+            <FormHelperText error sx={{ px: 2, textAlign: 'left' }}>
+              No onramp available for these details. Please select a different
+              payment method, fiat or crypto.
             </FormHelperText>
           )}
 
-          <Autocomplete
-            disabled={!debouncedAmount || !paymentMethodOptions.length}
-            disableClearable
-            fullWidth
-            defaultValue={paymentMethodOptions[0]}
-            value={paymentMethodOptions[0]}
+          <WalletInput wallet={wallet} onChange={setWallet} />
+
+          <PaymentMethodSelect
+            amount={debouncedAmount}
+            selectedPaymentMethod={selectedPaymentMethod}
+            onChange={setSelectedPaymentMethod}
             options={paymentMethodOptions}
-            getOptionLabel={(option) => option.name}
-            isOptionEqualToValue={(option) =>
-              option.name === selectedPaymentMethod?.name
-            }
-            renderInput={(params) => (
-              <TextField
-                label="From"
-                {...params}
-                inputProps={{
-                  ...params.inputProps,
-                  sx: { color: 'text.primary' },
-                }}
-                InputProps={{
-                  ...params.InputProps,
-                  sx: {
-                    backgroundColor: 'background.paper',
-                  },
-                }}
-                sx={{
-                  mt: 2,
-                  '&.MuiFormLabel-root': { color: 'text.primary' },
-                  backgroundColor: 'background.paper',
-                }}
-                InputLabelProps={{
-                  shrink: true,
-                  sx: {
-                    color: 'text.primary',
-                    '&.Mui-focused': { color: 'text.primary' },
-                  },
-                }}
-              />
-            )}
-            renderOption={(props, option) => (
-              <li {...props} key={option.name}>
-                <Icon icon={option.icon} sx={{ color: 'text.primary' }} />{' '}
-                {option.name}
-              </li>
-            )}
-            onChange={(_e, value) => {
-              if (value) {
-                setSelectedPaymentMethod(value)
-              }
-            }}
           />
 
           <Button

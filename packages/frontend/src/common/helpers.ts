@@ -1,6 +1,6 @@
 import numeral from 'numeral'
 
-import { BuyQuote, Crypto } from 'src/web-api-client'
+import { BuyQuote, Crypto, Limit } from 'src/web-api-client'
 import { PaymentMethodOption } from 'src/views/pages/Asset'
 
 export const getFilteredAssets = (
@@ -59,3 +59,22 @@ export const getPaymentMethodOptions = (
 
   return uniqueMethods
 }
+
+export const getLimit = (paymentMethodOptions: PaymentMethodOption[]): Limit => {
+  const limit: Limit = { min: Infinity, max: -Infinity }
+
+  paymentMethodOptions.forEach(method => {
+    const { min, max } = method.limits;
+
+    if (min < limit.min) limit.min = min;
+    if (max > limit.max) limit.max = max;
+
+  })
+
+  return limit
+}
+
+export const getRecommendedPaymentMethods = (paymentMethodOptions: PaymentMethodOption[]): PaymentMethodOption[] =>
+  paymentMethodOptions.filter((method) =>
+    Math.min(method.rate)
+  )
