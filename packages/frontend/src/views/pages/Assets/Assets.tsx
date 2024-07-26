@@ -72,6 +72,9 @@ const Assets: React.FC = () => {
       return assets
     }
 
+    if (search && !filteredAssetsRef.current.length)
+      filteredAssetsRef.current = getFilteredAssets(assets, search)
+
     const newFilteredAssets = getFilteredAssets(
       filteredAssetsRef.current,
       search

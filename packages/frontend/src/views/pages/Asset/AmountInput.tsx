@@ -25,7 +25,6 @@ const AmountInput: React.FC<AmountInputProps> = ({
       }}
       value={formatNumber(amount)}
       fullWidth
-      autoFocus
       variant="outlined"
       type="text"
       inputProps={{ sx: { color: 'text.primary' } }}

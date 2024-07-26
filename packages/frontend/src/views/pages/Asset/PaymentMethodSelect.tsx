@@ -1,5 +1,12 @@
 import React from 'react'
-import { Autocomplete, Box, TextField, Typography } from '@mui/material'
+import {
+  Autocomplete,
+  Box,
+  Popper,
+  PopperProps,
+  TextField,
+  Typography,
+} from '@mui/material'
 
 import { PaymentMethodOption } from './Asset'
 
@@ -9,6 +16,10 @@ interface PaymentMethodSelectProps {
   onChange: (option: PaymentMethodOption) => void
   amount: string
 }
+
+const CustomPopper = (props: PopperProps) => (
+  <Popper style={{ zIndex: 1300 }} placement="top-start" {...props} />
+)
 
 const PaymentMethodSelect: React.FC<PaymentMethodSelectProps> = ({
   options,
@@ -29,7 +40,6 @@ const PaymentMethodSelect: React.FC<PaymentMethodSelectProps> = ({
       <Autocomplete
         blurOnSelect
         disabled={!amount || !options.length}
-        disableClearable
         fullWidth
         defaultValue={
           selectedPaymentMethod || {
@@ -68,6 +78,7 @@ const PaymentMethodSelect: React.FC<PaymentMethodSelectProps> = ({
             }}
             InputProps={{
               ...params.InputProps,
+              readOnly: true,
               startAdornment: selectedPaymentMethod?.icon ? (
                 <Box
                   component="img"
@@ -100,7 +111,11 @@ const PaymentMethodSelect: React.FC<PaymentMethodSelectProps> = ({
             <Box
               component="img"
               src={option.icon}
-              sx={{ marginRight: 2, height: 24, width: 24 }}
+              sx={{
+                marginRight: 2,
+                height: 24,
+                width: 24,
+              }}
             />
             {option.name}
           </li>
@@ -110,6 +125,8 @@ const PaymentMethodSelect: React.FC<PaymentMethodSelectProps> = ({
             onChange(value)
           }
         }}
+        PopperComponent={CustomPopper}
+        disableClearable
       />
     </>
   )
