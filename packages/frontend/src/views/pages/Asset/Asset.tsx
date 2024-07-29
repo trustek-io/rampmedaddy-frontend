@@ -126,10 +126,20 @@ const Asset: React.FC = () => {
       quote.errors?.some((error) => error.type === 'LimitMismatch')
     )
 
+    console.log(limitErrorQuote)
+
     const { max, min } = getLimit(limitErrorQuote)
 
-    return `Amount should be in between USD ${min} and USD ${max}`
+    if (min !== Infinity && max !== -Infinity)
+      return `Amount should be in between USD ${min} and USD ${max}`
   }, [quotes, isQuotesFetching, bestRate, selectedPaymentMethod])
+
+  const hasQuoteError = useMemo(
+    () =>
+      quotes.length &&
+      quotes.every((quote) => !quote.availablePaymentMethods?.length),
+    [quotes]
+  )
 
   const isBuyDisabled = useMemo(
     () => !wallet || !!limitError || isLoading || !amount,
@@ -206,26 +216,35 @@ const Asset: React.FC = () => {
             validationError={limitError}
           />
 
-          <Typography align="left" variant="body2" color="text.disabled">
-            {isQuotesFetching && (
-              <>
-                <CircularProgress size={13} sx={{ color: 'text.disabled' }} />{' '}
-                Fetching best price...
-              </>
-            )}
-          </Typography>
+          {isQuotesFetching && selectedPaymentMethod && (
+            <Typography align="left" variant="body2" color="text.disabled">
+              <CircularProgress size={13} sx={{ color: 'text.disabled' }} />{' '}
+              Fetching best price...
+            </Typography>
+          )}
+
+          {!!(hasQuoteError && !isQuotesFetching && selectedPaymentMethod) && (
+            <Typography align="left" variant="body2" color="text.disabled">
+              <FormHelperText error sx={{ px: 2, textAlign: 'left' }}>
+                No onramp available for these details. Please select a different
+                payment method or crypto.
+              </FormHelperText>
+            </Typography>
+          )}
+
+          {!paymentMethodOptions.length && (
+            <Typography align="left" variant="body2" color="text.disabled">
+              <FormHelperText error sx={{ px: 2, textAlign: 'left' }}>
+                No onramp available for these details. Please select a different
+                crypto.
+              </FormHelperText>
+            </Typography>
+          )}
 
           {bestRate && !isQuotesFetching && (
             <Typography align="left" variant="body2" color="text.disabled">
               1 {asset?.code} ≈ {bestRate.toFixed(2)} USD`
             </Typography>
-          )}
-
-          {!(paymentMethodOptions.length || isQuotesFetching) && (
-            <FormHelperText error sx={{ px: 2, textAlign: 'left' }}>
-              No onramp available for these details. Please select a different
-              payment method, fiat or crypto.
-            </FormHelperText>
           )}
 
           <WalletInput wallet={wallet} onChange={setWallet} />
