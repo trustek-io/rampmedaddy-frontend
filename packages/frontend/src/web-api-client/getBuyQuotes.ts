@@ -12,6 +12,8 @@ export interface BuyQuotesArgs {
   sourceCurrency: string
   destinationCurrency: string
   amount: string
+  paymentMethod?: string
+  network: string
 }
 
 export interface Limit {
@@ -49,10 +51,12 @@ export const getBuyQuotesApi = async ({
   sourceCurrency,
   destinationCurrency,
   amount,
+  paymentMethod,
+  network,
 }: BuyQuotesArgs): Promise<BuyQuote[]> =>
   request({
     method: 'GET',
     // url: `${BASE_URL}/crypto_purchases/${sourceCurrency}/${destinationCurrency}`,
     url: `https://api.onramper.com/quotes/${sourceCurrency}/${destinationCurrency}`,
-    params: { amount },
+    params: { amount, paymentMethod, network },
   })

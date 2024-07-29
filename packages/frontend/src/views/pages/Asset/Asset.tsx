@@ -25,7 +25,13 @@ import PaymentMethodSelect from './PaymentMethodSelect'
 import { useAssetContext } from 'src/views/context/AssetContext'
 
 // api
-import { buyCryptoApi, getBuyQuotesApi, Limit } from 'src/web-api-client'
+import {
+  buyCryptoApi,
+  getBuyQuotesApi,
+  Limit,
+  Error,
+  BuyQuote,
+} from 'src/web-api-client'
 import { useDebounce } from 'src/hooks/use-debounce'
 
 export interface PaymentMethodOption {
@@ -36,6 +42,7 @@ export interface PaymentMethodOption {
   paymentMethod: string
   icon: string
   ramp: string
+  error: Error | null
 }
 
 const Asset: React.FC = () => {
@@ -44,23 +51,12 @@ const Asset: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [isQuotesFetching, setIsQuotesFetching] = useState<boolean>(false)
   const [redirectUrl, setRedirectUrl] = useState<string>('')
-  const [limit, setLimit] = useState<Limit | null>(null)
   const [paymentMethodOptions, setPaymentMethodOptions] = useState<
     PaymentMethodOption[]
   >([])
+  const [quotes, setQuotes] = useState<BuyQuote[]>([])
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethodOption | null>(null)
-
-  useEffect(() => {
-    const recommended = paymentMethodOptions.filter((method) =>
-      Math.min(method.rate)
-    )[0]
-
-    if (recommended) setSelectedPaymentMethod(recommended)
-
-    if (!limit && !!paymentMethodOptions.length)
-      setLimit(getLimit(paymentMethodOptions))
-  }, [paymentMethodOptions, limit, setLimit])
 
   const debouncedAmount = useDebounce(amount, 300)
 
@@ -68,7 +64,7 @@ const Asset: React.FC = () => {
   const navigate = useNavigate()
 
   const getBuyQuotes = useCallback(
-    async (amount: string) => {
+    async (amount: string, shouldSetOptions?: boolean) => {
       if (!amount || !asset) return
 
       setIsQuotesFetching(true)
@@ -76,35 +72,68 @@ const Asset: React.FC = () => {
         const buyQuotes = await getBuyQuotesApi({
           sourceCurrency: 'usd',
           destinationCurrency: asset.code.toLowerCase(),
+          network: asset.network,
           amount,
+          ...(!!selectedPaymentMethod && {
+            paymentMethod: selectedPaymentMethod.paymentMethod,
+          }),
         })
 
-        setPaymentMethodOptions(getPaymentMethodOptions(buyQuotes))
+        if (shouldSetOptions) {
+          setPaymentMethodOptions(getPaymentMethodOptions(buyQuotes))
+        } else {
+          setQuotes(buyQuotes)
+        }
       } catch (error) {
         console.log(error)
       } finally {
         setIsQuotesFetching(false)
       }
     },
-    [asset]
+    [asset, selectedPaymentMethod]
   )
 
   useEffect(() => {
-    getBuyQuotes('200')
+    getBuyQuotes('200', true)
   }, [getBuyQuotes])
 
-  const getValidationError = useCallback(() => {
-    if (!paymentMethodOptions.length || !limit) return ''
+  useEffect(() => {
+    if (!asset) navigate('/')
+  }, [asset, navigate])
 
-    if (+amount < limit.min || +amount > limit.max)
-      return `Amount should be in between USD ${limit.min} and USD ${limit.max}`
+  useEffect(() => {
+    if (redirectUrl) window.location.href = redirectUrl
+  }, [redirectUrl])
 
-    return ''
-  }, [paymentMethodOptions, limit, amount])
+  useEffect(() => {
+    if (!selectedPaymentMethod) return
+
+    getBuyQuotes(debouncedAmount)
+  }, [debouncedAmount, getBuyQuotes, selectedPaymentMethod])
+
+  const bestRate = useMemo(() => {
+    return (
+      quotes.find((quote) => quote.recommendations?.includes('BestPrice'))
+        ?.rate ||
+      quotes.find((quote) => quote.recommendations?.includes('LowKyc'))?.rate
+    )
+  }, [quotes])
+
+  const limitError = useMemo(() => {
+    if (isQuotesFetching || bestRate || !selectedPaymentMethod) return ''
+
+    const limitErrorQuote = quotes.filter((quote) =>
+      quote.errors?.some((error) => error.type === 'LimitMismatch')
+    )
+
+    const { max, min } = getLimit(limitErrorQuote)
+
+    return `Amount should be in between USD ${min} and USD ${max}`
+  }, [quotes, isQuotesFetching, bestRate, selectedPaymentMethod])
 
   const isBuyDisabled = useMemo(
-    () => !wallet || !!getValidationError() || isLoading,
-    [getValidationError, wallet, isLoading]
+    () => !wallet || !!limitError || isLoading || !amount,
+    [limitError, wallet, isLoading, amount]
   )
 
   const buyCrypto = useCallback(
@@ -148,18 +177,6 @@ const Asset: React.FC = () => {
     [isBuyDisabled, asset, selectedPaymentMethod]
   )
 
-  useEffect(() => {
-    if (!asset) navigate('/')
-  }, [asset, navigate])
-
-  useEffect(() => {
-    if (redirectUrl) window.location.href = redirectUrl
-  }, [redirectUrl])
-
-  useEffect(() => {
-    getBuyQuotes(debouncedAmount)
-  }, [debouncedAmount, getBuyQuotes])
-
   return (
     <AppLayout>
       <Stack alignItems="flex-start">
@@ -186,20 +203,21 @@ const Asset: React.FC = () => {
           <AmountInput
             onChange={setAmount}
             amount={amount}
-            validationError={getValidationError()}
+            validationError={limitError}
           />
 
-          {!getValidationError() && (
+          <Typography align="left" variant="body2" color="text.disabled">
+            {isQuotesFetching && (
+              <>
+                <CircularProgress size={13} sx={{ color: 'text.disabled' }} />{' '}
+                Fetching best price...
+              </>
+            )}
+          </Typography>
+
+          {bestRate && !isQuotesFetching && (
             <Typography align="left" variant="body2" color="text.disabled">
-              {isQuotesFetching && (
-                <>
-                  <CircularProgress size={13} sx={{ color: 'text.disabled' }} />{' '}
-                  Fetching best price...
-                </>
-              )}
-              {selectedPaymentMethod?.rate &&
-                !isQuotesFetching &&
-                `1 ${asset?.code} ≈ ${selectedPaymentMethod.rate.toFixed(2)} USD`}
+              1 {asset?.code} ≈ {bestRate.toFixed(2)} USD`
             </Typography>
           )}
 

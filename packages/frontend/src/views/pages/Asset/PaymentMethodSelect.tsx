@@ -17,6 +17,17 @@ interface PaymentMethodSelectProps {
   amount: string
 }
 
+export const EMPTY_PAYMENT_METHOD = {
+  name: '',
+  ramp: '',
+  rate: 0,
+  limits: { max: 0, min: 0 },
+  quoteId: '',
+  paymentMethod: '',
+  icon: '',
+  error: null,
+}
+
 const CustomPopper = (props: PopperProps) => (
   <Popper style={{ zIndex: 1300 }} placement="top-start" {...props} />
 )
@@ -41,28 +52,8 @@ const PaymentMethodSelect: React.FC<PaymentMethodSelectProps> = ({
         blurOnSelect
         disabled={!amount || !options.length}
         fullWidth
-        defaultValue={
-          selectedPaymentMethod || {
-            name: '',
-            ramp: '',
-            rate: 0,
-            limits: { max: 0, min: 0 },
-            quoteId: '',
-            paymentMethod: '',
-            icon: '',
-          }
-        }
-        value={
-          selectedPaymentMethod || {
-            name: '',
-            ramp: '',
-            rate: 0,
-            limits: { max: 0, min: 0 },
-            quoteId: '',
-            paymentMethod: '',
-            icon: '',
-          }
-        }
+        defaultValue={selectedPaymentMethod || EMPTY_PAYMENT_METHOD}
+        value={selectedPaymentMethod || EMPTY_PAYMENT_METHOD}
         options={options}
         getOptionLabel={(option) => option.name}
         isOptionEqualToValue={(option, value) =>

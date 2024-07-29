@@ -1,6 +1,6 @@
 import numeral from 'numeral'
 
-import { BuyQuote, Crypto, Limit } from 'src/web-api-client'
+import { BuyQuote, Crypto, Error, Limit } from 'src/web-api-client'
 import { PaymentMethodOption } from 'src/views/pages/Asset'
 
 export const getFilteredAssets = (
@@ -26,23 +26,41 @@ export const formatNumber = (number?: number | string): string => {
   return numeral(number).format('0,0')
 }
 
+const getLimitError = (errors?: Error[]): Error | null => {
+  if (
+    !errors?.length ||
+    errors.every((error) => error.type !== 'LimitMismatch')
+  )
+    return null
+
+  return errors.find((error) => error.type === 'LimitMismatch') || null
+}
+
 export const getPaymentMethodOptions = (
   quotes: BuyQuote[]
 ): PaymentMethodOption[] => {
   const filteredArray = quotes
-    .filter((item) => !item.errors)
+    .filter((item) => {
+      if (item.errors?.every((error) => error.type !== 'LimitMismatch'))
+        return false
+
+      return !!item.availablePaymentMethods?.length
+    })
     .map((item) =>
       item.availablePaymentMethods?.map((method) => ({
         name: method.name,
         limits: method.details.limits.aggregatedLimit,
         rate: item.rate,
         quoteId: item.quoteId,
-        paymentMethod: item.paymentMethod,
+        paymentMethod: method.paymentTypeId,
         icon: method.icon,
         ramp: item.ramp,
+        error: getLimitError(item.errors),
       }))
     )
     .flat()
+
+  console.log('filteredArray', filteredArray)
 
   const uniqueMethods = filteredArray.reduce<PaymentMethodOption[]>(
     (acc, current) => {
@@ -57,24 +75,26 @@ export const getPaymentMethodOptions = (
     []
   )
 
+  console.log('uniqueMethods', uniqueMethods)
+
   return uniqueMethods
 }
 
-export const getLimit = (paymentMethodOptions: PaymentMethodOption[]): Limit => {
+export const getLimit = (quotes: BuyQuote[]): Limit => {
   const limit: Limit = { min: Infinity, max: -Infinity }
 
-  paymentMethodOptions.forEach(method => {
-    const { min, max } = method.limits;
+  quotes.forEach((quote) => {
+    const max = quote.errors?.[0].maxAmount
+    const min = quote.errors?.[0].minAmount
 
-    if (min < limit.min) limit.min = min;
-    if (max > limit.max) limit.max = max;
-
+    if (min && min < limit.min) limit.min = min
+    if (max && max > limit.max) limit.max = max
   })
 
   return limit
 }
 
-export const getRecommendedPaymentMethods = (paymentMethodOptions: PaymentMethodOption[]): PaymentMethodOption[] =>
-  paymentMethodOptions.filter((method) =>
-    Math.min(method.rate)
-  )
+export const getRecommendedPaymentMethods = (
+  paymentMethodOptions: PaymentMethodOption[]
+): PaymentMethodOption[] =>
+  paymentMethodOptions.filter((method) => Math.min(method.rate))
