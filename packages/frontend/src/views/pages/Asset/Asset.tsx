@@ -29,7 +29,6 @@ import {
   buyCryptoApi,
   getBuyQuotesApi,
   Limit,
-  Error,
   BuyQuote,
 } from 'src/web-api-client'
 import { useDebounce } from 'src/hooks/use-debounce'
@@ -42,11 +41,10 @@ export interface PaymentMethodOption {
   paymentMethod: string
   icon: string
   ramp: string
-  error: Error | null
 }
 
 const Asset: React.FC = () => {
-  const [amount, setAmount] = useState<string>('200')
+  const [amount, setAmount] = useState<string>('')
   const [wallet, setWallet] = useState<string>('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [isQuotesFetching, setIsQuotesFetching] = useState<boolean>(false)
@@ -64,8 +62,8 @@ const Asset: React.FC = () => {
   const navigate = useNavigate()
 
   const getBuyQuotes = useCallback(
-    async (amount: string, shouldSetOptions?: boolean) => {
-      if (!amount || !asset) return
+    async (amount: string) => {
+      if (!asset || !amount) return
 
       setIsQuotesFetching(true)
       try {
@@ -79,11 +77,9 @@ const Asset: React.FC = () => {
           }),
         })
 
-        if (shouldSetOptions) {
-          setPaymentMethodOptions(getPaymentMethodOptions(buyQuotes))
-        } else {
-          setQuotes(buyQuotes)
-        }
+        setPaymentMethodOptions(getPaymentMethodOptions(buyQuotes))
+
+        setQuotes(buyQuotes)
       } catch (error) {
         console.log(error)
       } finally {
@@ -94,10 +90,6 @@ const Asset: React.FC = () => {
   )
 
   useEffect(() => {
-    getBuyQuotes('200', true)
-  }, [getBuyQuotes])
-
-  useEffect(() => {
     if (!asset) navigate('/')
   }, [asset, navigate])
 
@@ -106,10 +98,8 @@ const Asset: React.FC = () => {
   }, [redirectUrl])
 
   useEffect(() => {
-    if (!selectedPaymentMethod) return
-
     getBuyQuotes(debouncedAmount)
-  }, [debouncedAmount, getBuyQuotes, selectedPaymentMethod])
+  }, [debouncedAmount, getBuyQuotes])
 
   const bestRate = useMemo(() => {
     return (
@@ -120,30 +110,36 @@ const Asset: React.FC = () => {
   }, [quotes])
 
   const limitError = useMemo(() => {
-    if (isQuotesFetching || bestRate || !selectedPaymentMethod) return ''
+    if (isQuotesFetching || bestRate) return ''
 
     const limitErrorQuote = quotes.filter((quote) =>
       quote.errors?.some((error) => error.type === 'LimitMismatch')
     )
 
-    console.log(limitErrorQuote)
-
     const { max, min } = getLimit(limitErrorQuote)
 
     if (min !== Infinity && max !== -Infinity)
       return `Amount should be in between USD ${min} and USD ${max}`
-  }, [quotes, isQuotesFetching, bestRate, selectedPaymentMethod])
+  }, [quotes, isQuotesFetching, bestRate])
 
-  const hasQuoteError = useMemo(
-    () =>
-      quotes.length &&
-      quotes.every((quote) => !quote.availablePaymentMethods?.length),
-    [quotes]
-  )
+  const hasQuoteError = useMemo(() => {
+    return (
+      !paymentMethodOptions.length &&
+      !limitError &&
+      debouncedAmount &&
+      !isQuotesFetching
+    )
+  }, [paymentMethodOptions, isQuotesFetching, limitError, debouncedAmount])
 
   const isBuyDisabled = useMemo(
-    () => !wallet || !!limitError || isLoading || !amount,
-    [limitError, wallet, isLoading, amount]
+    () =>
+      !wallet ||
+      !!limitError ||
+      isLoading ||
+      !amount ||
+      hasQuoteError ||
+      isQuotesFetching,
+    [limitError, wallet, isLoading, amount, hasQuoteError, isQuotesFetching]
   )
 
   const buyCrypto = useCallback(
@@ -216,27 +212,18 @@ const Asset: React.FC = () => {
             validationError={limitError}
           />
 
-          {isQuotesFetching && selectedPaymentMethod && (
+          {isQuotesFetching && (
             <Typography align="left" variant="body2" color="text.disabled">
               <CircularProgress size={13} sx={{ color: 'text.disabled' }} />{' '}
               Fetching best price...
             </Typography>
           )}
 
-          {!!(hasQuoteError && !isQuotesFetching && selectedPaymentMethod) && (
+          {hasQuoteError && (
             <Typography align="left" variant="body2" color="text.disabled">
               <FormHelperText error sx={{ px: 2, textAlign: 'left' }}>
                 No onramp available for these details. Please select a different
                 payment method or crypto.
-              </FormHelperText>
-            </Typography>
-          )}
-
-          {!paymentMethodOptions.length && (
-            <Typography align="left" variant="body2" color="text.disabled">
-              <FormHelperText error sx={{ px: 2, textAlign: 'left' }}>
-                No onramp available for these details. Please select a different
-                crypto.
               </FormHelperText>
             </Typography>
           )}

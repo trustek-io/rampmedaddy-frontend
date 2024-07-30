@@ -56,7 +56,6 @@ export const getBuyQuotesApi = async ({
 }: BuyQuotesArgs): Promise<BuyQuote[]> =>
   request({
     method: 'GET',
-    // url: `${BASE_URL}/crypto_purchases/${sourceCurrency}/${destinationCurrency}`,
     url: `https://api.onramper.com/quotes/${sourceCurrency}/${destinationCurrency}`,
     params: { amount, paymentMethod, network },
   })
