@@ -12,7 +12,10 @@ import {
 } from '@mui/material'
 
 // helpers
-import { getLimit, getPaymentMethodOptions } from 'src/common/helpers'
+import {
+  getLimitErrorMessage,
+  getPaymentMethodOptions,
+} from 'src/common/helpers'
 
 // views
 import Icon from 'src/views/components/Icon'
@@ -44,11 +47,13 @@ export interface PaymentMethodOption {
 }
 
 const Asset: React.FC = () => {
+  const { asset } = useAssetContext()
+  const navigate = useNavigate()
+
   const [amount, setAmount] = useState<string>('')
   const [wallet, setWallet] = useState<string>('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [isQuotesFetching, setIsQuotesFetching] = useState<boolean>(false)
-  const [redirectUrl, setRedirectUrl] = useState<string>('')
   const [paymentMethodOptions, setPaymentMethodOptions] = useState<
     PaymentMethodOption[]
   >([])
@@ -57,9 +62,6 @@ const Asset: React.FC = () => {
     useState<PaymentMethodOption | null>(null)
 
   const debouncedAmount = useDebounce(amount, 300)
-
-  const { asset } = useAssetContext()
-  const navigate = useNavigate()
 
   const getBuyQuotes = useCallback(
     async (amount: string) => {
@@ -94,10 +96,6 @@ const Asset: React.FC = () => {
   }, [asset, navigate])
 
   useEffect(() => {
-    if (redirectUrl) window.location.href = redirectUrl
-  }, [redirectUrl])
-
-  useEffect(() => {
     getBuyQuotes(debouncedAmount)
   }, [debouncedAmount, getBuyQuotes])
 
@@ -112,24 +110,17 @@ const Asset: React.FC = () => {
   const limitError = useMemo(() => {
     if (isQuotesFetching || bestRate) return ''
 
-    const limitErrorQuote = quotes.filter((quote) =>
-      quote.errors?.some((error) => error.type === 'LimitMismatch')
-    )
-
-    const { max, min } = getLimit(limitErrorQuote)
-
-    if (min !== Infinity && max !== -Infinity)
-      return `Amount should be in between USD ${min} and USD ${max}`
+    return getLimitErrorMessage(quotes)
   }, [quotes, isQuotesFetching, bestRate])
 
-  const hasQuoteError = useMemo(() => {
-    return (
+  const hasQuoteError = useMemo(
+    () =>
       !paymentMethodOptions.length &&
       !limitError &&
       debouncedAmount &&
-      !isQuotesFetching
-    )
-  }, [paymentMethodOptions, isQuotesFetching, limitError, debouncedAmount])
+      !isQuotesFetching,
+    [paymentMethodOptions, isQuotesFetching, limitError, debouncedAmount]
+  )
 
   const isBuyDisabled = useMemo(
     () =>
@@ -172,7 +163,9 @@ const Asset: React.FC = () => {
             quoteId: selectedPaymentMethod?.quoteId!,
           },
         })
-        setRedirectUrl(response.message.transactionInformation.url)
+
+        const redirectUrl = response.message.transactionInformation.url
+        if (redirectUrl) window.location.href = redirectUrl
       } catch (error) {
         console.log(error)
       } finally {

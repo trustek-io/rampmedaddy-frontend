@@ -60,7 +60,7 @@ export const getPaymentMethodOptions = (
   return uniqueMethods
 }
 
-export const getLimit = (quotes: BuyQuote[]): Limit => {
+const getLimit = (quotes: BuyQuote[]): Limit => {
   const limit: Limit = { min: Infinity, max: -Infinity }
 
   quotes.forEach((quote) => {
@@ -72,4 +72,17 @@ export const getLimit = (quotes: BuyQuote[]): Limit => {
   })
 
   return limit
+}
+
+export const getLimitErrorMessage = (quotes: BuyQuote[]): string => {
+  const limitErrorQuote = quotes.filter((quote) =>
+    quote.errors?.some((error) => error.type === 'LimitMismatch')
+  )
+
+  const { max, min } = getLimit(limitErrorQuote)
+
+  if (min !== Infinity && max !== -Infinity)
+    return `Amount should be in between USD ${min} and USD ${max}`
+
+  return ''
 }
