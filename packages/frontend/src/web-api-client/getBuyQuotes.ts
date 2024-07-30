@@ -1,4 +1,5 @@
 import request from './request'
+import { v4 as uuidv4 } from 'uuid'
 
 export interface Error {
   errorId: number
@@ -57,5 +58,13 @@ export const getBuyQuotesApi = async ({
   request({
     method: 'GET',
     url: `https://api.onramper.com/quotes/${sourceCurrency}/${destinationCurrency}`,
-    params: { amount, paymentMethod, network },
+    params: {
+      amount,
+      paymentMethod,
+      network,
+      isRecurringPayment: false,
+      type: 'buy',
+      input: 'source',
+      uuid: uuidv4(),
+    },
   })

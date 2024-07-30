@@ -71,7 +71,7 @@ const Asset: React.FC = () => {
       try {
         const buyQuotes = await getBuyQuotesApi({
           sourceCurrency: 'usd',
-          destinationCurrency: asset.code.toLowerCase(),
+          destinationCurrency: asset.id,
           network: asset.network,
           amount,
           ...(!!selectedPaymentMethod && {
