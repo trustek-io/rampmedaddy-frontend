@@ -5,6 +5,7 @@ import App from './App'
 import reportWebVitals from './reportWebVitals'
 
 import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { LDProvider } from 'src/common/launchdarkly'
 
 const theme = createTheme({
   palette: {
@@ -14,17 +15,18 @@ const theme = createTheme({
     },
     text: {
       primary: '#ffffff',
+      disabled: '#868A90',
     },
   },
 })
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(
-  <React.StrictMode>
-    <ThemeProvider theme={theme}>
+  <ThemeProvider theme={theme}>
+    <LDProvider>
       <App />
-    </ThemeProvider>
-  </React.StrictMode>
+    </LDProvider>
+  </ThemeProvider>
 )
 
 reportWebVitals()

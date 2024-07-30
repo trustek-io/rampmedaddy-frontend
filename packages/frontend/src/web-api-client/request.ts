@@ -2,10 +2,6 @@ import axios, { AxiosRequestConfig } from 'axios'
 
 export const API_SERVER_URL = 'https://pay.crypto.com'
 export const BASE_URL = `${API_SERVER_URL}/api`
-const CRYPTO_COM_TOKEN =
-  process.env.NODE_ENV === 'development'
-    ? 'pk_test_VyzWBzcYZkKxeFg5H5Srjr7t'
-    : process.env.REACT_APP_CRYPTO_COM_TOKEN
 
 export const axiosInstance = axios.create({ baseURL: BASE_URL })
 
@@ -17,7 +13,7 @@ const request = async <T>(config: AxiosRequestConfig): Promise<T> => {
 
 // Request interceptor
 axiosInstance.interceptors.request.use((config) => {
-  config.headers!['Authorization'] = `Bearer ${CRYPTO_COM_TOKEN}`
+  config.headers!['Authorization'] = process.env.REACT_APP_ONRAMP_TOKEN
   return config
 })
 
