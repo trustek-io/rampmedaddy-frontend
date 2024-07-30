@@ -31,6 +31,5 @@ export interface AssetsResponse {
 export const getAssetsApi = async (): Promise<AssetsResponse> =>
   request({
     method: 'GET',
-    // url: `${BASE_URL}/crypto_purchases/assets`,
     url: 'https://api.onramper.com/supported?type=buy',
   })

@@ -14,7 +14,6 @@ const WalletInput: React.FC<WalletInputProps> = ({ wallet, onChange }) => {
       variant="outlined"
       value={wallet}
       onChange={(event) => {
-        // setHasError(false)
         onChange(event.target.value)
       }}
       inputProps={{ sx: { color: 'text.primary' } }}
