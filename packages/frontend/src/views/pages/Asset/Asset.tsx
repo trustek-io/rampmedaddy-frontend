@@ -154,8 +154,8 @@ const Asset: React.FC = () => {
           supportedParams: {
             partnerData: {
               redirectUrl: {
-                success: 'https://rampmedaddy-staging.trustek.io/',
-                failure: 'https://rampmedaddy-staging.trustek.io/',
+                success: process.env.REACT_APP_REDIRECT_URL || '',
+                failure: process.env.REACT_APP_REDIRECT_URL || '',
               },
             },
           },
