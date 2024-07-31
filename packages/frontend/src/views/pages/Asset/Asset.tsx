@@ -13,8 +13,10 @@ import {
 
 // helpers
 import {
+  getBestRate,
   getLimitErrorMessage,
   getPaymentMethodOptions,
+  getSupportedQuote,
 } from 'src/common/helpers'
 
 // views
@@ -28,22 +30,21 @@ import PaymentMethodSelect from './PaymentMethodSelect'
 import { useAssetContext } from 'src/views/context/AssetContext'
 
 // api
-import {
-  buyCryptoApi,
-  getBuyQuotesApi,
-  Limit,
-  BuyQuote,
-} from 'src/web-api-client'
+import { buyCryptoApi, getBuyQuotesApi, BuyQuote } from 'src/web-api-client'
 import { useDebounce } from 'src/hooks/use-debounce'
 
 export interface PaymentMethodOption {
   name: string
   rate: number
-  limits: Limit
   quoteId: string
   paymentMethod: string
   icon: string
   ramp: string
+}
+
+enum Status {
+  SUBMITTING = 'SUBMITTING',
+  FETCHING_QUOTES = 'FETCHING_QUOTES',
 }
 
 const Asset: React.FC = () => {
@@ -52,8 +53,7 @@ const Asset: React.FC = () => {
 
   const [amount, setAmount] = useState<string>('')
   const [wallet, setWallet] = useState<string>('')
-  const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [isQuotesFetching, setIsQuotesFetching] = useState<boolean>(false)
+  const [status, setStatus] = useState<Status | null>(null)
   const [paymentMethodOptions, setPaymentMethodOptions] = useState<
     PaymentMethodOption[]
   >([])
@@ -67,7 +67,8 @@ const Asset: React.FC = () => {
     async (amount: string) => {
       if (!asset || !amount) return
 
-      setIsQuotesFetching(true)
+      setStatus(Status.FETCHING_QUOTES)
+
       try {
         const buyQuotes = await getBuyQuotesApi({
           sourceCurrency: 'usd',
@@ -85,7 +86,7 @@ const Asset: React.FC = () => {
       } catch (error) {
         console.log(error)
       } finally {
-        setIsQuotesFetching(false)
+        setStatus(null)
       }
     },
     [asset, selectedPaymentMethod]
@@ -99,38 +100,32 @@ const Asset: React.FC = () => {
     getBuyQuotes(debouncedAmount)
   }, [debouncedAmount, getBuyQuotes])
 
-  const bestRate = useMemo(() => {
-    return (
-      quotes.find((quote) => quote.recommendations?.includes('BestPrice'))
-        ?.rate ||
-      quotes.find((quote) => quote.recommendations?.includes('LowKyc'))?.rate
-    )
-  }, [quotes])
+  const quotesFetched = useMemo(
+    () => status !== Status.FETCHING_QUOTES && debouncedAmount === amount,
+    [status, debouncedAmount, amount]
+  )
 
   const limitError = useMemo(() => {
-    if (isQuotesFetching || bestRate) return ''
+    if (!quotesFetched) return ''
 
     return getLimitErrorMessage(quotes)
-  }, [quotes, isQuotesFetching, bestRate])
+  }, [quotes, quotesFetched])
+
+  const bestRate = useMemo(() => {
+    if (!quotesFetched || limitError) return ''
+
+    return getBestRate(quotes)
+  }, [quotes, quotesFetched, limitError])
 
   const hasQuoteError = useMemo(
     () =>
-      !paymentMethodOptions.length &&
-      !limitError &&
-      debouncedAmount &&
-      !isQuotesFetching,
-    [paymentMethodOptions, isQuotesFetching, limitError, debouncedAmount]
+      quotesFetched && !limitError && getSupportedQuote(quotes)?.errors?.length,
+    [quotesFetched, limitError, quotes]
   )
 
   const isBuyDisabled = useMemo(
-    () =>
-      !wallet ||
-      !!limitError ||
-      isLoading ||
-      !amount ||
-      hasQuoteError ||
-      isQuotesFetching,
-    [limitError, wallet, isLoading, amount, hasQuoteError, isQuotesFetching]
+    () => !!(!wallet || limitError || status || !amount || hasQuoteError),
+    [limitError, wallet, amount, hasQuoteError, status]
   )
 
   const buyCrypto = useCallback(
@@ -140,7 +135,7 @@ const Asset: React.FC = () => {
       event.stopPropagation()
       event.preventDefault()
 
-      setIsLoading(true)
+      setStatus(Status.SUBMITTING)
 
       try {
         const response = await buyCryptoApi({
@@ -169,7 +164,7 @@ const Asset: React.FC = () => {
       } catch (error) {
         console.log(error)
       } finally {
-        setIsLoading(false)
+        setStatus(null)
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -180,14 +175,21 @@ const Asset: React.FC = () => {
     <AppLayout>
       <Stack alignItems="flex-start">
         <IconButton
+          disableRipple
           onClick={() => navigate('/')}
           sx={{
             color: 'text.primary',
             typography: 'subtitle2',
+            '&:hover': {
+              backgroundColor: 'background.paper',
+            },
+            '&:focus': {
+              backgroundColor: 'background.paper',
+            },
           }}
         >
           <Icon icon="eva:arrow-ios-back-fill" />{' '}
-          <Typography component="span" variant="body2">
+          <Typography component="span" variant="body2" sx={{ pr: 1 }}>
             Back
           </Typography>
         </IconButton>
@@ -205,7 +207,7 @@ const Asset: React.FC = () => {
             validationError={limitError}
           />
 
-          {isQuotesFetching && (
+          {status === Status.FETCHING_QUOTES && (
             <Typography align="left" variant="body2" color="text.disabled">
               <CircularProgress size={13} sx={{ color: 'text.disabled' }} />{' '}
               Fetching best price...
@@ -221,7 +223,7 @@ const Asset: React.FC = () => {
             </Typography>
           )}
 
-          {bestRate && !isQuotesFetching && (
+          {bestRate && (
             <Typography align="left" variant="body2" color="text.disabled">
               1 {asset?.code} ≈ {bestRate.toFixed(2)} USD
             </Typography>
