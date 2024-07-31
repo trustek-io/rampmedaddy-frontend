@@ -30,7 +30,7 @@ export const getPaymentMethodOptions = (
   quotes: BuyQuote[]
 ): PaymentMethodOption[] => {
   const filteredArray = quotes
-    .filter((item) => !item.errors)
+    .filter((item) => !item.errors && item.ramp !== 'transfi')
     .map((item) =>
       item.availablePaymentMethods?.map((method) => ({
         name: method.name,

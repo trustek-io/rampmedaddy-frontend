@@ -223,7 +223,7 @@ const Asset: React.FC = () => {
 
           {bestRate && !isQuotesFetching && (
             <Typography align="left" variant="body2" color="text.disabled">
-              1 {asset?.code} ≈ {bestRate.toFixed(2)} USD`
+              1 {asset?.code} ≈ {bestRate.toFixed(2)} USD
             </Typography>
           )}
 
