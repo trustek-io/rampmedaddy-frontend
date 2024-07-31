@@ -145,7 +145,7 @@ const Asset: React.FC = () => {
       try {
         const response = await buyCryptoApi({
           source: 'usd',
-          destination: asset.code,
+          destination: asset.id,
           amount: +amount,
           type: 'buy',
           paymentMethod: selectedPaymentMethod?.paymentMethod!,
