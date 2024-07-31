@@ -29,8 +29,9 @@ export const formatNumber = (number?: number | string): string => {
 export const getPaymentMethodOptions = (
   quotes: BuyQuote[]
 ): PaymentMethodOption[] => {
+  const ramps = ['topper']
   const filteredArray = quotes
-    .filter((item) => !item.errors && item.ramp !== 'transfi')
+    .filter((item) => !item.errors && ramps.includes(item.ramp))
     .map((item) =>
       item.availablePaymentMethods?.map((method) => ({
         name: method.name,
