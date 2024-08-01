@@ -2,6 +2,11 @@ import React, { createContext, ReactNode, FC } from 'react'
 import { withLDProvider } from 'launchdarkly-react-client-sdk'
 import { v4 as uuidv4 } from 'uuid'
 
+const KEY =
+  process.env.NODE_ENV === 'development'
+    ? '669e28743c8c340fdb027f5d'
+    : process.env.REACT_APP_LAUNCHDARKLY_KEY
+
 interface LDProviderProps {
   children: ReactNode
 }
@@ -9,8 +14,7 @@ interface LDProviderProps {
 const LDClientContext = createContext({})
 
 const LDProviderHOC = withLDProvider({
-  // TODO: Complete launchdarkly
-  clientSideID: '66616d7931660710585593fe',
+  clientSideID: KEY!,
   user: {
     key: uuidv4(),
   },

@@ -1,6 +1,6 @@
 import numeral from 'numeral'
 
-import { BuyQuote, Crypto } from 'src/web-api-client'
+import { BuyQuote, Crypto, Limit } from 'src/web-api-client'
 import { PaymentMethodOption } from 'src/views/pages/Asset'
 
 export const SUPPORTED_RAMPS = ['topper']
@@ -31,9 +31,9 @@ export const formatNumber = (number?: number | string): string => {
 export const getPaymentMethodOptions = (
   quotes: BuyQuote[]
 ): PaymentMethodOption[] => {
-  return quotes
-    .filter((item) => !item.errors && SUPPORTED_RAMPS.includes(item.ramp))
-    .flatMap((item) =>
+  const filteredArray = quotes
+    .filter((item) => !item.errors)
+    .map((item) =>
       item.availablePaymentMethods?.map((method) => ({
         name: method.name,
         rate: item.rate,
@@ -43,23 +43,64 @@ export const getPaymentMethodOptions = (
         ramp: item.ramp,
       }))
     )
-    .filter((method): method is PaymentMethodOption => method !== undefined)
-}
+    .flat()
 
-export const getSupportedQuote = (quotes: BuyQuote[]): BuyQuote | undefined =>
-  quotes.find((quote) => SUPPORTED_RAMPS.includes(quote.ramp))
-
-export const getLimitErrorMessage = (quotes: BuyQuote[]): string => {
-  const supportedQuote = getSupportedQuote(quotes)
-
-  const error = supportedQuote?.errors?.find(
-    (error) => error.type === 'LimitMismatch'
+  const uniqueMethods = filteredArray.reduce<PaymentMethodOption[]>(
+    (acc, current) => {
+      const existing = acc.find((item) => item.name === current?.name)
+      if (!existing || existing.rate > current!.rate) {
+        return acc
+          .filter((item) => item.name !== current!.name)
+          .concat(current!)
+      }
+      return acc
+    },
+    []
   )
 
-  if (!error) return ''
+  return uniqueMethods
+}
 
-  return error.message
+const getLimit = (quotes: BuyQuote[]): Limit => {
+  const limit: Limit = { min: Infinity, max: -Infinity }
+
+  quotes.forEach((quote) => {
+    const max = quote.errors?.[0].maxAmount
+    const min = quote.errors?.[0].minAmount
+
+    if (min && min < limit.min) limit.min = Number(min.toFixed(2))
+    if (max && max > limit.max) limit.max = Number(max.toFixed(2))
+  })
+
+  return limit
+}
+
+export const getLimitErrorMessage = (quotes: BuyQuote[]): string => {
+  const limitErrorQuote = quotes.filter((quote) =>
+    quote.errors?.some((error) => error.type === 'LimitMismatch')
+  )
+
+  const { max, min } = getLimit(limitErrorQuote)
+
+  if (min !== Infinity && max !== -Infinity)
+    return `Amount should be in between USD ${min} and USD ${max}`
+
+  return ''
 }
 
 export const getBestRate = (quotes: BuyQuote[]): number | undefined =>
-  getSupportedQuote(quotes)?.rate
+  quotes.find((quote) => quote.recommendations?.includes('BestPrice'))?.rate ||
+  quotes.find((quote) => quote.recommendations?.includes('LowKyc'))?.rate
+
+export const getSupportedRampsQuotes = (
+  quotes: BuyQuote[],
+  supportedRamps: string[]
+): BuyQuote[] => {
+  const supportedRampsQuotes: BuyQuote[] = []
+
+  quotes.forEach((quote) => {
+    if (supportedRamps.includes(quote.ramp)) supportedRampsQuotes.push(quote)
+  })
+
+  return supportedRampsQuotes
+}

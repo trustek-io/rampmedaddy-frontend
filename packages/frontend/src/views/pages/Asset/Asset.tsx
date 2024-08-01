@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useFlags } from 'launchdarkly-react-client-sdk'
 
 // @mui
 import {
@@ -16,7 +17,7 @@ import {
   getBestRate,
   getLimitErrorMessage,
   getPaymentMethodOptions,
-  getSupportedQuote,
+  getSupportedRampsQuotes,
 } from 'src/common/helpers'
 
 // views
@@ -24,7 +25,9 @@ import Icon from 'src/views/components/Icon'
 import AppLayout from 'src/views/templates/AppLayout'
 import AmountInput from './AmountInput'
 import WalletInput from './WalletInput'
-import PaymentMethodSelect from './PaymentMethodSelect'
+import PaymentMethodSelect, {
+  EMPTY_PAYMENT_METHOD,
+} from './PaymentMethodSelect'
 
 // context
 import { useAssetContext } from 'src/views/context/AssetContext'
@@ -47,9 +50,25 @@ enum Status {
   FETCHING_QUOTES = 'FETCHING_QUOTES',
 }
 
+interface Provider {
+  ramp: string
+  enabled: boolean
+}
+
 const Asset: React.FC = () => {
   const { asset } = useAssetContext()
   const navigate = useNavigate()
+  const flags = useFlags<{ providers: Provider[] }>()
+
+  const supportedRamps = useMemo(
+    () =>
+      flags.providers?.length
+        ? flags.providers
+            .filter(({ enabled }) => enabled)
+            .map(({ ramp }) => ramp)
+        : [],
+    [flags.providers]
+  )
 
   const [amount, setAmount] = useState<string>('')
   const [wallet, setWallet] = useState<string>('')
@@ -68,6 +87,7 @@ const Asset: React.FC = () => {
       if (!asset || !amount) return
 
       setStatus(Status.FETCHING_QUOTES)
+      setQuotes([])
 
       try {
         const buyQuotes = await getBuyQuotesApi({
@@ -75,21 +95,26 @@ const Asset: React.FC = () => {
           destinationCurrency: asset.id,
           network: asset.network,
           amount,
-          ...(!!selectedPaymentMethod && {
+          ...(selectedPaymentMethod?.paymentMethod && {
             paymentMethod: selectedPaymentMethod.paymentMethod,
           }),
         })
 
-        setPaymentMethodOptions(getPaymentMethodOptions(buyQuotes))
+        const supportedRampsQuotes = getSupportedRampsQuotes(
+          buyQuotes,
+          supportedRamps
+        )
 
-        setQuotes(buyQuotes)
+        setQuotes(supportedRampsQuotes)
+
+        setPaymentMethodOptions(getPaymentMethodOptions(supportedRampsQuotes))
       } catch (error) {
         console.log(error)
       } finally {
         setStatus(null)
       }
     },
-    [asset, selectedPaymentMethod]
+    [asset, selectedPaymentMethod, supportedRamps]
   )
 
   useEffect(() => {
@@ -97,30 +122,25 @@ const Asset: React.FC = () => {
   }, [asset, navigate])
 
   useEffect(() => {
+    if (!paymentMethodOptions.length)
+      setSelectedPaymentMethod(EMPTY_PAYMENT_METHOD)
+  }, [paymentMethodOptions])
+
+  useEffect(() => {
     getBuyQuotes(debouncedAmount)
   }, [debouncedAmount, getBuyQuotes])
 
-  const quotesFetched = useMemo(
-    () => status !== Status.FETCHING_QUOTES && debouncedAmount === amount,
-    [status, debouncedAmount, amount]
-  )
-
-  const limitError = useMemo(() => {
-    if (!quotesFetched) return ''
-
-    return getLimitErrorMessage(quotes)
-  }, [quotes, quotesFetched])
+  const limitError = useMemo(() => getLimitErrorMessage(quotes), [quotes])
 
   const bestRate = useMemo(() => {
-    if (!quotesFetched || limitError) return ''
+    if (limitError) return ''
 
     return getBestRate(quotes)
-  }, [quotes, quotesFetched, limitError])
+  }, [quotes, limitError])
 
   const hasQuoteError = useMemo(
-    () =>
-      quotesFetched && !limitError && getSupportedQuote(quotes)?.errors?.length,
-    [quotesFetched, limitError, quotes]
+    () => !limitError && !paymentMethodOptions.length && !!quotes.length,
+    [limitError, paymentMethodOptions, quotes]
   )
 
   const isBuyDisabled = useMemo(
@@ -207,27 +227,28 @@ const Asset: React.FC = () => {
             validationError={limitError}
           />
 
-          {status === Status.FETCHING_QUOTES && (
-            <Typography align="left" variant="body2" color="text.disabled">
-              <CircularProgress size={13} sx={{ color: 'text.disabled' }} />{' '}
-              Fetching best price...
-            </Typography>
-          )}
-
-          {hasQuoteError && (
-            <Typography align="left" variant="body2" color="text.disabled">
-              <FormHelperText error sx={{ px: 2, textAlign: 'left' }}>
-                No onramp available for these details. Please select a different
-                payment method or crypto.
-              </FormHelperText>
-            </Typography>
-          )}
-
-          {bestRate && (
-            <Typography align="left" variant="body2" color="text.disabled">
-              1 {asset?.code} ≈ {bestRate.toFixed(2)} USD
-            </Typography>
-          )}
+          <Typography align="left" variant="body2" color="text.disabled">
+            {status === Status.FETCHING_QUOTES ? (
+              <>
+                <CircularProgress size={13} sx={{ color: 'text.disabled' }} />{' '}
+                Fetching best price...
+              </>
+            ) : (
+              <>
+                {hasQuoteError && (
+                  <FormHelperText error sx={{ px: 2, textAlign: 'left' }}>
+                    No onramp available for these details. Please select a
+                    different payment method or crypto.
+                  </FormHelperText>
+                )}
+                {bestRate && (
+                  <>
+                    1 {asset?.code} ≈ {bestRate.toFixed(2)} USD
+                  </>
+                )}
+              </>
+            )}
+          </Typography>
 
           <WalletInput wallet={wallet} onChange={setWallet} />
 

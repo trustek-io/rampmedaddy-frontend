@@ -11,6 +11,7 @@ const request = async <T>(config: AxiosRequestConfig): Promise<T> => {
   return resp.data
 }
 
+// Request interceptor
 axiosInstance.interceptors.request.use((config) => {
   config.headers!['Authorization'] = process.env.REACT_APP_ONRAMP_TOKEN
   return config
