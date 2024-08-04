@@ -1,7 +1,8 @@
 import numeral from 'numeral'
 
-import { BuyQuote, Crypto, Limit } from 'src/web-api-client'
+import { BuyQuote, Crypto, Default, Limit } from 'src/web-api-client'
 import { PaymentMethodOption } from 'src/views/pages/Asset'
+import { uniq } from 'lodash'
 
 export const SUPPORTED_RAMPS = ['topper']
 
@@ -103,4 +104,10 @@ export const getSupportedRampsQuotes = (
   })
 
   return supportedRampsQuotes
+}
+
+export const getCurrencies = (defaults: Record<string, Default>): string[] => {
+  const values = Object.values(defaults).map((value) => value.source)
+
+  return uniq(values)
 }

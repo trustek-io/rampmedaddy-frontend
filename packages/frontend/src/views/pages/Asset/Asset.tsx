@@ -15,6 +15,7 @@ import {
 // helpers
 import {
   getBestRate,
+  getCurrencies,
   getLimitErrorMessage,
   getPaymentMethodOptions,
   getSupportedRampsQuotes,
@@ -33,8 +34,14 @@ import PaymentMethodSelect, {
 import { useAssetContext } from 'src/views/context/AssetContext'
 
 // api
-import { buyCryptoApi, getBuyQuotesApi, BuyQuote } from 'src/web-api-client'
+import {
+  buyCryptoApi,
+  getBuyQuotesApi,
+  BuyQuote,
+  getDefaultsApi,
+} from 'src/web-api-client'
 import { useDebounce } from 'src/hooks/use-debounce'
+import CurrencySelect from './CurrencySelect'
 
 export interface PaymentMethodOption {
   name: string
@@ -48,6 +55,7 @@ export interface PaymentMethodOption {
 enum Status {
   SUBMITTING = 'SUBMITTING',
   FETCHING_QUOTES = 'FETCHING_QUOTES',
+  FETCHING_DEFAULTS = 'FETCHING_DEFAULTS',
 }
 
 interface Provider {
@@ -70,7 +78,7 @@ const Asset: React.FC = () => {
     [flags.providers]
   )
 
-  const [amount, setAmount] = useState<string>('')
+  const [amount, setAmount] = useState<number | null>(null)
   const [wallet, setWallet] = useState<string>('')
   const [status, setStatus] = useState<Status | null>(null)
   const [paymentMethodOptions, setPaymentMethodOptions] = useState<
@@ -79,24 +87,29 @@ const Asset: React.FC = () => {
   const [quotes, setQuotes] = useState<BuyQuote[]>([])
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethodOption | null>(null)
+  const [currencies, setCurrencies] = useState<string[]>([])
+  const [selectedCurrency, setSelectedCurrency] = useState<string>('')
 
   const debouncedAmount = useDebounce(amount, 300)
 
   const getBuyQuotes = useCallback(
-    async (amount: string) => {
-      if (!asset || !amount) return
+    async (amount: string, currency: string) => {
+      if (!asset || !amount || !currency) return
 
       setStatus(Status.FETCHING_QUOTES)
       setQuotes([])
 
       try {
         const buyQuotes = await getBuyQuotesApi({
-          sourceCurrency: 'usd',
+          sourceCurrency: currency.toLowerCase(),
           destinationCurrency: asset.id,
           network: asset.network,
           amount,
           ...(selectedPaymentMethod?.paymentMethod && {
             paymentMethod: selectedPaymentMethod.paymentMethod,
+          }),
+          ...(wallet && {
+            walletAddress: wallet,
           }),
         })
 
@@ -114,8 +127,32 @@ const Asset: React.FC = () => {
         setStatus(null)
       }
     },
-    [asset, selectedPaymentMethod, supportedRamps]
+    [asset, selectedPaymentMethod, supportedRamps, wallet]
   )
+
+  const getDefaults = useCallback(async () => {
+    setStatus(Status.FETCHING_DEFAULTS)
+    setQuotes([])
+
+    try {
+      const {
+        message: { defaults, recommended },
+      } = await getDefaultsApi()
+
+      const currencies = getCurrencies(defaults)
+
+      setCurrencies(currencies)
+      setSelectedCurrency(recommended.source)
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setStatus(null)
+    }
+  }, [])
+
+  useEffect(() => {
+    getDefaults()
+  }, [getDefaults])
 
   useEffect(() => {
     if (!asset) navigate('/')
@@ -127,8 +164,8 @@ const Asset: React.FC = () => {
   }, [paymentMethodOptions])
 
   useEffect(() => {
-    getBuyQuotes(debouncedAmount)
-  }, [debouncedAmount, getBuyQuotes])
+    getBuyQuotes(debouncedAmount, selectedCurrency)
+  }, [debouncedAmount, getBuyQuotes, selectedCurrency])
 
   const limitError = useMemo(() => getLimitErrorMessage(quotes), [quotes])
 
@@ -150,7 +187,7 @@ const Asset: React.FC = () => {
 
   const buyCrypto = useCallback(
     async (event: React.FormEvent) => {
-      if (isBuyDisabled || !asset) return
+      if (isBuyDisabled || !asset || !amount) return
 
       event.stopPropagation()
       event.preventDefault()
@@ -161,7 +198,7 @@ const Asset: React.FC = () => {
         const response = await buyCryptoApi({
           source: 'usd',
           destination: asset.id,
-          amount: +amount,
+          amount,
           type: 'buy',
           paymentMethod: selectedPaymentMethod?.paymentMethod!,
           wallet,
@@ -221,11 +258,21 @@ const Asset: React.FC = () => {
 
       <Stack sx={{ px: 2 }}>
         <form onSubmit={buyCrypto}>
-          <AmountInput
-            onChange={setAmount}
-            amount={amount}
-            validationError={limitError}
-          />
+          <Stack direction="row" spacing={3}>
+            <AmountInput
+              onChange={(amount) =>
+                setAmount(amount ? +amount.toFixed(2) : null)
+              }
+              amount={amount}
+              validationError={limitError}
+            />
+
+            <CurrencySelect
+              onChange={setSelectedCurrency}
+              currencies={currencies}
+              selectedCurrency={selectedCurrency}
+            />
+          </Stack>
 
           <Typography align="left" variant="body2" color="text.disabled">
             {status === Status.FETCHING_QUOTES ? (

@@ -14,6 +14,7 @@ export interface BuyQuotesArgs {
   amount: string
   paymentMethod?: string
   network: string
+  walletAddress?: string
 }
 
 export interface Limit {
@@ -53,6 +54,7 @@ export const getBuyQuotesApi = async ({
   amount,
   paymentMethod,
   network,
+  walletAddress,
 }: BuyQuotesArgs): Promise<BuyQuote[]> =>
   request({
     method: 'GET',
@@ -62,5 +64,6 @@ export const getBuyQuotesApi = async ({
       paymentMethod,
       network,
       type: 'buy',
+      walletAddress,
     },
   })
