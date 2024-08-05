@@ -238,7 +238,7 @@ const Asset: React.FC = () => {
 
       try {
         const response = await buyCryptoApi({
-          source: 'usd',
+          source: selectedCurrency.toLowerCase(),
           destination: asset.id,
           amount,
           type: 'buy',
@@ -277,6 +277,7 @@ const Asset: React.FC = () => {
       amount,
       wallet,
       memo,
+      selectedCurrency,
     ]
   )
 
@@ -344,7 +345,7 @@ const Asset: React.FC = () => {
                 )}
                 {bestRate && (
                   <>
-                    1 {asset?.code} ≈ {bestRate.toFixed(2)} USD
+                    1 {asset?.code} ≈ {bestRate.toFixed(2)} {selectedCurrency}
                   </>
                 )}
               </>
