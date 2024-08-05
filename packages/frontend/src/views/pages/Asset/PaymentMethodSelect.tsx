@@ -1,13 +1,14 @@
 import React from 'react'
 import {
   Autocomplete,
+  Divider,
   Popper,
   PopperProps,
   Stack,
   TextField,
   Typography,
 } from '@mui/material'
-import { capitalize } from 'lodash'
+import { capitalize, indexOf } from 'lodash'
 
 import { PaymentMethodOption } from './Asset'
 
@@ -37,6 +38,12 @@ const PaymentMethodSelect: React.FC<PaymentMethodSelectProps> = ({
   amount,
   assetCode,
 }) => {
+  const isLastOption = (option: PaymentMethodOption) => {
+    const index = indexOf(options, option)
+
+    return options.length - 1 === index
+  }
+
   return (
     <>
       <Typography
@@ -86,31 +93,48 @@ const PaymentMethodSelect: React.FC<PaymentMethodSelectProps> = ({
             }}
           />
         )}
-        renderOption={(props, option) => (
-          <Stack
-            sx={{ justifyContent: 'space-between !important' }}
-            component="li"
-            spacing={2}
-            direction="row"
-            key={option.ramp}
-            {...props}
-          >
-            <Stack spacing={0.5}>
-              <Typography
-                sx={{ textTransform: 'capitalize', fontSize: '14px' }}
+        renderOption={(props, option, index) => (
+          <>
+            <Stack
+              sx={{ justifyContent: 'space-between !important' }}
+              component="li"
+              spacing={2}
+              direction="row"
+              key={option.ramp}
+              {...props}
+            >
+              <Stack spacing={0.5}>
+                <Typography
+                  sx={{ textTransform: 'capitalize', fontSize: '14px' }}
+                >
+                  {option.ramp}
+                </Typography>
+
+                <Typography variant="body2" sx={{ fontSize: '10px' }}>
+                  {option.paymentMethods}
+                </Typography>
+              </Stack>
+
+              <Stack
+                direction="row"
+                sx={{ fontSize: '14px', textAlign: 'end' }}
               >
-                {option.ramp}
-              </Typography>
-
-              <Typography variant="body2" sx={{ fontSize: '10px' }}>
-                {option.paymentMethods}
-              </Typography>
+                {`${option.payout} ${assetCode}`}
+              </Stack>
             </Stack>
 
-            <Stack direction="row" sx={{ fontSize: '14px', textAlign: 'end' }}>
-              {`${option.payout} ${assetCode}`}
-            </Stack>
-          </Stack>
+            {!isLastOption(option) && (
+              <Stack alignItems="center">
+                <Divider
+                  sx={{
+                    borderColor: 'text.disabled',
+                    borderStyle: 'dashed',
+                    width: '100%',
+                  }}
+                />
+              </Stack>
+            )}
+          </>
         )}
         onChange={(_e, value) => {
           if (value) {
