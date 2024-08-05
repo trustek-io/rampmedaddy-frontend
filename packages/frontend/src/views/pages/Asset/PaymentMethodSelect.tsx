@@ -1,12 +1,13 @@
 import React from 'react'
 import {
   Autocomplete,
-  Box,
   Popper,
   PopperProps,
+  Stack,
   TextField,
   Typography,
 } from '@mui/material'
+import { capitalize } from 'lodash'
 
 import { PaymentMethodOption } from './Asset'
 
@@ -15,21 +16,18 @@ interface PaymentMethodSelectProps {
   selectedPaymentMethod: PaymentMethodOption | null
   onChange: (option: PaymentMethodOption) => void
   amount: string
+  assetCode?: string
 }
 
-export const EMPTY_PAYMENT_METHOD = {
-  name: '',
+export const EMPTY_PAYMENT_METHOD: PaymentMethodOption = {
   ramp: '',
   rate: 0,
-  limits: { max: 0, min: 0 },
   quoteId: '',
-  paymentMethod: '',
-  icon: '',
-  error: null,
+  paymentMethods: '',
 }
 
 const CustomPopper = (props: PopperProps) => (
-  <Popper style={{ zIndex: 1300 }} placement="top-start" {...props} />
+  <Popper style={{ width: '100%' }} placement="top-start" {...props} />
 )
 
 const PaymentMethodSelect: React.FC<PaymentMethodSelectProps> = ({
@@ -37,6 +35,7 @@ const PaymentMethodSelect: React.FC<PaymentMethodSelectProps> = ({
   selectedPaymentMethod,
   onChange,
   amount,
+  assetCode,
 }) => {
   return (
     <>
@@ -55,29 +54,19 @@ const PaymentMethodSelect: React.FC<PaymentMethodSelectProps> = ({
         defaultValue={selectedPaymentMethod || EMPTY_PAYMENT_METHOD}
         value={selectedPaymentMethod || EMPTY_PAYMENT_METHOD}
         options={options}
-        getOptionLabel={(option) => option.name}
-        isOptionEqualToValue={(option, value) =>
-          option.paymentMethod === value.paymentMethod
-        }
+        getOptionLabel={(option) => capitalize(option.ramp)}
+        isOptionEqualToValue={(option, value) => option.ramp === value.ramp}
         renderInput={(params) => (
           <TextField
             {...params}
-            placeholder="Payment method"
+            placeholder="Available ramps"
             inputProps={{
               ...params.inputProps,
               sx: { color: 'text.primary' },
+              readOnly: true,
             }}
             InputProps={{
               ...params.InputProps,
-              readOnly: true,
-              startAdornment: selectedPaymentMethod?.icon ? (
-                <Box
-                  component="img"
-                  src={selectedPaymentMethod.icon}
-                  alt={selectedPaymentMethod.name}
-                  sx={{ marginRight: 1, height: 24, width: 24 }}
-                />
-              ) : null,
               sx: {
                 backgroundColor: 'background.paper',
               },
@@ -98,18 +87,30 @@ const PaymentMethodSelect: React.FC<PaymentMethodSelectProps> = ({
           />
         )}
         renderOption={(props, option) => (
-          <li {...props} key={option.name}>
-            <Box
-              component="img"
-              src={option.icon}
-              sx={{
-                marginRight: 2,
-                height: 24,
-                width: 24,
-              }}
-            />
-            {option.name}
-          </li>
+          <Stack
+            sx={{ justifyContent: 'space-between !important' }}
+            component="li"
+            spacing={2}
+            direction="row"
+            key={option.ramp}
+            {...props}
+          >
+            <Stack spacing={0.5}>
+              <Typography
+                sx={{ textTransform: 'capitalize', fontSize: '14px' }}
+              >
+                {option.ramp}
+              </Typography>
+
+              <Typography variant="body2" sx={{ fontSize: '10px' }}>
+                {option.paymentMethods}
+              </Typography>
+            </Stack>
+
+            <Stack direction="row" sx={{ fontSize: '14px', textAlign: 'end' }}>
+              {`${option.payout} ${assetCode}`}
+            </Stack>
+          </Stack>
         )}
         onChange={(_e, value) => {
           if (value) {

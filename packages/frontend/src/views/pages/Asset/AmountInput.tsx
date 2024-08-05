@@ -17,11 +17,11 @@ const AmountInput: React.FC<AmountInputProps> = ({
       placeholder="0.00"
       type="tel"
       sx={{
+        flex: 3,
         mt: 2,
         '& .MuiFormHelperText-root': {
           color: 'text.primary',
         },
-        flex: 2,
         '& input[type=number]': {
           MozAppearance: 'textfield',
         },

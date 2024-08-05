@@ -34,32 +34,16 @@ export const getPaymentMethodOptions = (
 ): PaymentMethodOption[] => {
   const filteredArray = quotes
     .filter((item) => !item.errors)
-    .map((item) =>
-      item.availablePaymentMethods?.map((method) => ({
-        name: method.name,
-        rate: item.rate,
-        quoteId: item.quoteId,
-        paymentMethod: method.paymentTypeId,
-        icon: method.icon,
-        ramp: item.ramp,
-      }))
-    )
-    .flat()
+    .map((item) => ({
+      rate: item.rate,
+      quoteId: item.quoteId,
+      paymentMethods: item.availablePaymentMethods?.map(method => method.name).join(', ') ?? 'No available methods',
+      ramp: item.ramp,
+      payout: item.payout,
+      paymentMethod: item.paymentMethod
+    }));
 
-  const uniqueMethods = filteredArray.reduce<PaymentMethodOption[]>(
-    (acc, current) => {
-      const existing = acc.find((item) => item.name === current?.name)
-      if (!existing || existing.rate > current!.rate) {
-        return acc
-          .filter((item) => item.name !== current!.name)
-          .concat(current!)
-      }
-      return acc
-    },
-    []
-  )
-
-  return uniqueMethods
+  return filteredArray;
 }
 
 const getLimit = (quotes: BuyQuote[]): Limit => {

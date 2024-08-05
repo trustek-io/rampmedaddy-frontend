@@ -42,14 +42,25 @@ import {
 } from 'src/web-api-client'
 import { useDebounce } from 'src/hooks/use-debounce'
 import CurrencySelect from './CurrencySelect'
+import MemoInput from './MemoInput'
+
+const CRYPTO_REQUIRING_MEMO = [
+  'AXL',
+  'ATOM',
+  'EOS',
+  'HBAR',
+  'STX',
+  'XLM',
+  'XRP',
+]
 
 export interface PaymentMethodOption {
-  name: string
   rate: number
   quoteId: string
-  paymentMethod: string
-  icon: string
+  paymentMethods: string
   ramp: string
+  payout?: number
+  paymentMethod?: string
 }
 
 enum Status {
@@ -80,6 +91,7 @@ const Asset: React.FC = () => {
 
   const [amount, setAmount] = useState<number | null>(null)
   const [wallet, setWallet] = useState<string>('')
+  const [memo, setMemo] = useState<string>('')
   const [status, setStatus] = useState<Status | null>(null)
   const [paymentMethodOptions, setPaymentMethodOptions] = useState<
     PaymentMethodOption[]
@@ -105,9 +117,6 @@ const Asset: React.FC = () => {
           destinationCurrency: asset.id,
           network: asset.network,
           amount,
-          ...(selectedPaymentMethod?.paymentMethod && {
-            paymentMethod: selectedPaymentMethod.paymentMethod,
-          }),
           ...(wallet && {
             walletAddress: wallet,
           }),
@@ -127,7 +136,7 @@ const Asset: React.FC = () => {
         setStatus(null)
       }
     },
-    [asset, selectedPaymentMethod, supportedRamps, wallet]
+    [asset, supportedRamps, wallet]
   )
 
   const getDefaults = useCallback(async () => {
@@ -170,24 +179,54 @@ const Asset: React.FC = () => {
   const limitError = useMemo(() => getLimitErrorMessage(quotes), [quotes])
 
   const bestRate = useMemo(() => {
-    if (limitError) return ''
+    if (limitError || !amount) return ''
 
     return getBestRate(quotes)
-  }, [quotes, limitError])
+  }, [quotes, limitError, amount])
 
   const hasQuoteError = useMemo(
     () => !limitError && !paymentMethodOptions.length && !!quotes.length,
     [limitError, paymentMethodOptions, quotes]
   )
 
+  const isMemoRequired = useMemo(
+    () => asset && CRYPTO_REQUIRING_MEMO.includes(asset.code),
+    [asset]
+  )
+
   const isBuyDisabled = useMemo(
-    () => !!(!wallet || limitError || status || !amount || hasQuoteError),
-    [limitError, wallet, amount, hasQuoteError, status]
+    () =>
+      !!(
+        !wallet ||
+        limitError ||
+        status ||
+        !amount ||
+        hasQuoteError ||
+        (isMemoRequired && !memo) ||
+        !selectedPaymentMethod?.ramp
+      ),
+    [
+      limitError,
+      wallet,
+      amount,
+      hasQuoteError,
+      status,
+      isMemoRequired,
+      memo,
+      selectedPaymentMethod,
+    ]
   )
 
   const buyCrypto = useCallback(
     async (event: React.FormEvent) => {
-      if (isBuyDisabled || !asset || !amount) return
+      if (
+        isBuyDisabled ||
+        !asset ||
+        !amount ||
+        (isMemoRequired && !memo) ||
+        !selectedPaymentMethod?.paymentMethod
+      )
+        return
 
       event.stopPropagation()
       event.preventDefault()
@@ -200,19 +239,22 @@ const Asset: React.FC = () => {
           destination: asset.id,
           amount,
           type: 'buy',
-          paymentMethod: selectedPaymentMethod?.paymentMethod!,
-          wallet,
-          onramp: selectedPaymentMethod?.ramp!,
+          paymentMethod: selectedPaymentMethod.paymentMethod,
+          wallet: {
+            address: wallet,
+            ...(isMemoRequired && { memo }),
+          },
+          onramp: selectedPaymentMethod.ramp,
           supportedParams: {
             partnerData: {
               redirectUrl: {
-                success: process.env.REACT_APP_REDIRECT_URL || '',
-                failure: process.env.REACT_APP_REDIRECT_URL || '',
+                success: process.env.REACT_APP_REDIRECT_URL ?? '',
+                failure: process.env.REACT_APP_REDIRECT_URL ?? '',
               },
             },
           },
           metaData: {
-            quoteId: selectedPaymentMethod?.quoteId!,
+            quoteId: selectedPaymentMethod.quoteId,
           },
         })
 
@@ -224,8 +266,15 @@ const Asset: React.FC = () => {
         setStatus(null)
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isBuyDisabled, asset, selectedPaymentMethod]
+    [
+      isBuyDisabled,
+      asset,
+      selectedPaymentMethod,
+      isMemoRequired,
+      amount,
+      wallet,
+      memo,
+    ]
   )
 
   return (
@@ -252,7 +301,7 @@ const Asset: React.FC = () => {
         </IconButton>
       </Stack>
 
-      <Typography sx={{ mt: 3 }}>
+      <Typography sx={{ mt: 3, mb: 1 }}>
         How much {asset?.name} would you like?
       </Typography>
 
@@ -264,7 +313,9 @@ const Asset: React.FC = () => {
                 setAmount(amount ? +amount.toFixed(2) : null)
               }
               amount={amount}
-              validationError={limitError}
+              validationError={
+                status === Status.FETCHING_QUOTES ? '' : limitError
+              }
             />
 
             <CurrencySelect
@@ -285,7 +336,7 @@ const Asset: React.FC = () => {
                 {hasQuoteError && (
                   <FormHelperText error sx={{ px: 2, textAlign: 'left' }}>
                     No onramp available for these details. Please select a
-                    different payment method or crypto.
+                    different payment method, fiat or crypto.
                   </FormHelperText>
                 )}
                 {bestRate && (
@@ -299,11 +350,14 @@ const Asset: React.FC = () => {
 
           <WalletInput wallet={wallet} onChange={setWallet} />
 
+          {isMemoRequired && <MemoInput memo={memo} onChange={setMemo} />}
+
           <PaymentMethodSelect
             amount={debouncedAmount}
             selectedPaymentMethod={selectedPaymentMethod}
             onChange={setSelectedPaymentMethod}
             options={paymentMethodOptions}
+            assetCode={asset?.code}
           />
 
           <Button
