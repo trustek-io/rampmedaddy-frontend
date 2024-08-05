@@ -37,13 +37,15 @@ export const getPaymentMethodOptions = (
     .map((item) => ({
       rate: item.rate,
       quoteId: item.quoteId,
-      paymentMethods: item.availablePaymentMethods?.map(method => method.name).join(', ') ?? 'No available methods',
+      paymentMethods:
+        item.availablePaymentMethods?.map((method) => method.name).join(', ') ??
+        'No available methods',
       ramp: item.ramp,
       payout: item.payout,
-      paymentMethod: item.paymentMethod
-    }));
+      paymentMethod: item.paymentMethod,
+    }))
 
-  return filteredArray;
+  return filteredArray
 }
 
 const getLimit = (quotes: BuyQuote[]): Limit => {
@@ -60,7 +62,10 @@ const getLimit = (quotes: BuyQuote[]): Limit => {
   return limit
 }
 
-export const getLimitErrorMessage = (quotes: BuyQuote[]): string => {
+export const getLimitErrorMessage = (
+  quotes: BuyQuote[],
+  selectedCurrency: string
+): string => {
   const limitErrorQuote = quotes.filter((quote) =>
     quote.errors?.some((error) => error.type === 'LimitMismatch')
   )
@@ -68,7 +73,7 @@ export const getLimitErrorMessage = (quotes: BuyQuote[]): string => {
   const { max, min } = getLimit(limitErrorQuote)
 
   if (min !== Infinity && max !== -Infinity)
-    return `Amount should be in between USD ${min} and USD ${max}`
+    return `Amount should be in between ${selectedCurrency} ${min} and ${selectedCurrency} ${max}`
 
   return ''
 }

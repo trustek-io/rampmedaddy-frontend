@@ -79,7 +79,6 @@ const CurrencySelect: React.FC<CurrencySelectProps> = ({
               mr: 1,
             }}
             component="img"
-            alt="Currency icon"
             src={`https://cdn.onramper.com/icons/fiats/${currency.toLowerCase()}.svg`}
           />
           {currency}

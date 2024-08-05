@@ -176,7 +176,10 @@ const Asset: React.FC = () => {
     getBuyQuotes(debouncedAmount, selectedCurrency)
   }, [debouncedAmount, getBuyQuotes, selectedCurrency])
 
-  const limitError = useMemo(() => getLimitErrorMessage(quotes), [quotes])
+  const limitError = useMemo(
+    () => getLimitErrorMessage(quotes, selectedCurrency),
+    [quotes, selectedCurrency]
+  )
 
   const bestRate = useMemo(() => {
     if (limitError || !amount) return ''
