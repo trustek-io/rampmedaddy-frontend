@@ -1,10 +1,8 @@
 import numeral from 'numeral'
+import { uniq } from 'lodash'
 
 import { BuyQuote, Crypto, Default, Limit } from 'src/web-api-client'
 import { PaymentMethodOption } from 'src/views/pages/Asset'
-import { uniq } from 'lodash'
-
-export const SUPPORTED_RAMPS = ['topper']
 
 export const getFilteredAssets = (
   assets: Crypto[],
@@ -64,7 +62,7 @@ const getLimit = (quotes: BuyQuote[]): Limit => {
 
 export const getLimitErrorMessage = (
   quotes: BuyQuote[],
-  selectedCurrency: string
+  currency: string
 ): string => {
   const limitErrorQuote = quotes.filter((quote) =>
     quote.errors?.some((error) => error.type === 'LimitMismatch')
@@ -73,7 +71,7 @@ export const getLimitErrorMessage = (
   const { max, min } = getLimit(limitErrorQuote)
 
   if (min !== Infinity && max !== -Infinity)
-    return `Amount should be in between ${selectedCurrency} ${min} and ${selectedCurrency} ${max}`
+    return `Amount should be in between ${currency} ${min} and ${currency} ${max}`
 
   return ''
 }
@@ -96,7 +94,7 @@ export const getSupportedRampsQuotes = (
 }
 
 export const getCurrencies = (defaults: Record<string, Default>): string[] => {
-  const values = Object.values(defaults).map((value) => value.source)
+  const sources = Object.values(defaults).map((value) => value.source)
 
-  return uniq(values)
+  return uniq(sources)
 }
