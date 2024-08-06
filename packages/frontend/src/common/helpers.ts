@@ -1,6 +1,7 @@
 import numeral from 'numeral'
+import { uniq } from 'lodash'
 
-import { BuyQuote, Crypto, Limit } from 'src/web-api-client'
+import { BuyQuote, Crypto, Default, Limit } from 'src/web-api-client'
 import { PaymentMethodOption } from 'src/views/pages/Asset'
 
 export const getFilteredAssets = (
@@ -29,36 +30,20 @@ export const formatNumber = (number?: number | string): string => {
 export const getPaymentMethodOptions = (
   quotes: BuyQuote[]
 ): PaymentMethodOption[] => {
-  const ramps = ['topper']
   const filteredArray = quotes
-    .filter((item) => !item.errors && ramps.includes(item.ramp))
-    .map((item) =>
-      item.availablePaymentMethods?.map((method) => ({
-        name: method.name,
-        limits: method.details.limits.aggregatedLimit,
-        rate: item.rate,
-        quoteId: item.quoteId,
-        paymentMethod: method.paymentTypeId,
-        icon: method.icon,
-        ramp: item.ramp,
-      }))
-    )
-    .flat()
+    .filter((item) => !item.errors)
+    .map((item) => ({
+      rate: item.rate,
+      quoteId: item.quoteId,
+      paymentMethods:
+        item.availablePaymentMethods?.map((method) => method.name).join(', ') ??
+        'No available methods',
+      ramp: item.ramp,
+      payout: item.payout,
+      paymentMethod: item.paymentMethod,
+    }))
 
-  const uniqueMethods = filteredArray.reduce<PaymentMethodOption[]>(
-    (acc, current) => {
-      const existing = acc.find((item) => item.name === current?.name)
-      if (!existing || existing.rate > current!.rate) {
-        return acc
-          .filter((item) => item.name !== current!.name)
-          .concat(current!)
-      }
-      return acc
-    },
-    []
-  )
-
-  return uniqueMethods
+  return filteredArray
 }
 
 const getLimit = (quotes: BuyQuote[]): Limit => {
@@ -75,7 +60,10 @@ const getLimit = (quotes: BuyQuote[]): Limit => {
   return limit
 }
 
-export const getLimitErrorMessage = (quotes: BuyQuote[]): string => {
+export const getLimitErrorMessage = (
+  quotes: BuyQuote[],
+  currency: string
+): string => {
   const limitErrorQuote = quotes.filter((quote) =>
     quote.errors?.some((error) => error.type === 'LimitMismatch')
   )
@@ -83,7 +71,30 @@ export const getLimitErrorMessage = (quotes: BuyQuote[]): string => {
   const { max, min } = getLimit(limitErrorQuote)
 
   if (min !== Infinity && max !== -Infinity)
-    return `Amount should be in between USD ${min} and USD ${max}`
+    return `Amount should be in between ${currency} ${min} and ${currency} ${max}`
 
   return ''
+}
+
+export const getBestRate = (quotes: BuyQuote[]): number | undefined =>
+  quotes.find((quote) => quote.recommendations?.includes('BestPrice'))?.rate ||
+  quotes.find((quote) => quote.recommendations?.includes('LowKyc'))?.rate
+
+export const getSupportedRampsQuotes = (
+  quotes: BuyQuote[],
+  supportedRamps: string[]
+): BuyQuote[] => {
+  const supportedRampsQuotes: BuyQuote[] = []
+
+  quotes.forEach((quote) => {
+    if (supportedRamps.includes(quote.ramp)) supportedRampsQuotes.push(quote)
+  })
+
+  return supportedRampsQuotes
+}
+
+export const getCurrencies = (defaults: Record<string, Default>): string[] => {
+  const sources = Object.values(defaults).map((value) => value.source)
+
+  return uniq(sources)
 }

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useFlags } from 'launchdarkly-react-client-sdk'
 
 // @mui
 import {
@@ -13,8 +14,11 @@ import {
 
 // helpers
 import {
+  getBestRate,
+  getCurrencies,
   getLimitErrorMessage,
   getPaymentMethodOptions,
+  getSupportedRampsQuotes,
 } from 'src/common/helpers'
 
 // views
@@ -22,7 +26,9 @@ import Icon from 'src/views/components/Icon'
 import AppLayout from 'src/views/templates/AppLayout'
 import AmountInput from './AmountInput'
 import WalletInput from './WalletInput'
-import PaymentMethodSelect from './PaymentMethodSelect'
+import PaymentMethodSelect, {
+  EMPTY_PAYMENT_METHOD,
+} from './PaymentMethodSelect'
 
 // context
 import { useAssetContext } from 'src/views/context/AssetContext'
@@ -31,136 +37,231 @@ import { useAssetContext } from 'src/views/context/AssetContext'
 import {
   buyCryptoApi,
   getBuyQuotesApi,
-  Limit,
   BuyQuote,
+  getDefaultsApi,
 } from 'src/web-api-client'
 import { useDebounce } from 'src/hooks/use-debounce'
+import CurrencySelect from './CurrencySelect'
+import MemoInput from './MemoInput'
+
+const CRYPTO_REQUIRING_MEMO = [
+  'AXL',
+  'ATOM',
+  'EOS',
+  'HBAR',
+  'STX',
+  'XLM',
+  'XRP',
+]
 
 export interface PaymentMethodOption {
-  name: string
   rate: number
-  limits: Limit
   quoteId: string
-  paymentMethod: string
-  icon: string
+  paymentMethods: string
   ramp: string
+  payout?: number
+  paymentMethod?: string
+}
+
+enum Status {
+  SUBMITTING = 'SUBMITTING',
+  FETCHING_QUOTES = 'FETCHING_QUOTES',
+  FETCHING_DEFAULTS = 'FETCHING_DEFAULTS',
+}
+
+interface Provider {
+  ramp: string
+  enabled: boolean
 }
 
 const Asset: React.FC = () => {
   const { asset } = useAssetContext()
   const navigate = useNavigate()
+  const flags = useFlags<{ providers: Provider[] }>()
 
-  const [amount, setAmount] = useState<string>('')
+  const supportedRamps = useMemo(
+    () =>
+      flags.providers?.length
+        ? flags.providers
+            .filter(({ enabled }) => enabled)
+            .map(({ ramp }) => ramp)
+        : [],
+    [flags.providers]
+  )
+
+  const [amount, setAmount] = useState<number | null>(null)
   const [wallet, setWallet] = useState<string>('')
-  const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [isQuotesFetching, setIsQuotesFetching] = useState<boolean>(false)
+  const [memo, setMemo] = useState<string>('')
+  const [status, setStatus] = useState<Status | null>(null)
   const [paymentMethodOptions, setPaymentMethodOptions] = useState<
     PaymentMethodOption[]
   >([])
   const [quotes, setQuotes] = useState<BuyQuote[]>([])
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethodOption | null>(null)
+  const [currencies, setCurrencies] = useState<string[]>([])
+  const [selectedCurrency, setSelectedCurrency] = useState<string>('')
 
   const debouncedAmount = useDebounce(amount, 300)
 
   const getBuyQuotes = useCallback(
-    async (amount: string) => {
-      if (!asset || !amount) return
+    async (amount: string, currency: string) => {
+      if (!asset || !amount || !currency) return
 
-      setIsQuotesFetching(true)
+      setStatus(Status.FETCHING_QUOTES)
+      setQuotes([])
+
       try {
         const buyQuotes = await getBuyQuotesApi({
-          sourceCurrency: 'usd',
+          sourceCurrency: currency.toLowerCase(),
           destinationCurrency: asset.id,
           network: asset.network,
           amount,
-          ...(!!selectedPaymentMethod && {
-            paymentMethod: selectedPaymentMethod.paymentMethod,
+          ...(wallet && {
+            walletAddress: wallet,
           }),
         })
 
-        setPaymentMethodOptions(getPaymentMethodOptions(buyQuotes))
+        const supportedRampsQuotes = getSupportedRampsQuotes(
+          buyQuotes,
+          supportedRamps
+        )
 
-        setQuotes(buyQuotes)
+        setQuotes(supportedRampsQuotes)
+
+        setPaymentMethodOptions(getPaymentMethodOptions(supportedRampsQuotes))
       } catch (error) {
         console.log(error)
       } finally {
-        setIsQuotesFetching(false)
+        setStatus(null)
       }
     },
-    [asset, selectedPaymentMethod]
+    [asset, supportedRamps, wallet]
   )
+
+  const getDefaults = useCallback(async () => {
+    setStatus(Status.FETCHING_DEFAULTS)
+    setQuotes([])
+
+    try {
+      const {
+        message: { defaults, recommended },
+      } = await getDefaultsApi()
+
+      const currencies = getCurrencies(defaults)
+
+      setCurrencies(currencies)
+      setSelectedCurrency(recommended.source)
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setStatus(null)
+    }
+  }, [])
+
+  useEffect(() => {
+    getDefaults()
+  }, [getDefaults])
 
   useEffect(() => {
     if (!asset) navigate('/')
   }, [asset, navigate])
 
   useEffect(() => {
-    getBuyQuotes(debouncedAmount)
-  }, [debouncedAmount, getBuyQuotes])
+    if (!paymentMethodOptions.length)
+      setSelectedPaymentMethod(EMPTY_PAYMENT_METHOD)
+  }, [paymentMethodOptions])
 
-  const bestRate = useMemo(() => {
-    return (
-      quotes.find((quote) => quote.recommendations?.includes('BestPrice'))
-        ?.rate ||
-      quotes.find((quote) => quote.recommendations?.includes('LowKyc'))?.rate
-    )
-  }, [quotes])
+  useEffect(() => {
+    getBuyQuotes(debouncedAmount, selectedCurrency)
+  }, [debouncedAmount, getBuyQuotes, selectedCurrency])
 
   const limitError = useMemo(() => {
-    if (isQuotesFetching || bestRate) return ''
+    if (status === Status.FETCHING_QUOTES || !!paymentMethodOptions.length)
+      return ''
 
-    return getLimitErrorMessage(quotes)
-  }, [quotes, isQuotesFetching, bestRate])
+    return getLimitErrorMessage(quotes, selectedCurrency)
+  }, [quotes, selectedCurrency, paymentMethodOptions, status])
+
+  const bestRate = useMemo(() => {
+    if (limitError || !amount) return ''
+
+    return selectedPaymentMethod?.ramp
+      ? selectedPaymentMethod.rate
+      : getBestRate(quotes)
+  }, [quotes, limitError, amount, selectedPaymentMethod])
 
   const hasQuoteError = useMemo(
-    () =>
-      !paymentMethodOptions.length &&
-      !limitError &&
-      debouncedAmount &&
-      !isQuotesFetching,
-    [paymentMethodOptions, isQuotesFetching, limitError, debouncedAmount]
+    () => !limitError && !paymentMethodOptions.length && !!quotes.length,
+    [limitError, paymentMethodOptions, quotes]
+  )
+
+  const isMemoRequired = useMemo(
+    () => asset && CRYPTO_REQUIRING_MEMO.includes(asset.code),
+    [asset]
   )
 
   const isBuyDisabled = useMemo(
     () =>
-      !wallet ||
-      !!limitError ||
-      isLoading ||
-      !amount ||
-      hasQuoteError ||
-      isQuotesFetching,
-    [limitError, wallet, isLoading, amount, hasQuoteError, isQuotesFetching]
+      !!(
+        !wallet ||
+        limitError ||
+        status ||
+        !amount ||
+        hasQuoteError ||
+        (isMemoRequired && !memo) ||
+        !selectedPaymentMethod?.ramp
+      ),
+    [
+      limitError,
+      wallet,
+      amount,
+      hasQuoteError,
+      status,
+      isMemoRequired,
+      memo,
+      selectedPaymentMethod,
+    ]
   )
 
   const buyCrypto = useCallback(
     async (event: React.FormEvent) => {
-      if (isBuyDisabled || !asset) return
+      if (
+        isBuyDisabled ||
+        !asset ||
+        !amount ||
+        (isMemoRequired && !memo) ||
+        !selectedPaymentMethod?.paymentMethod
+      )
+        return
 
       event.stopPropagation()
       event.preventDefault()
 
-      setIsLoading(true)
+      setStatus(Status.SUBMITTING)
 
       try {
         const response = await buyCryptoApi({
-          source: 'usd',
+          source: selectedCurrency.toLowerCase(),
           destination: asset.id,
-          amount: +amount,
+          amount,
           type: 'buy',
-          paymentMethod: selectedPaymentMethod?.paymentMethod!,
-          wallet,
-          onramp: selectedPaymentMethod?.ramp!,
+          paymentMethod: selectedPaymentMethod.paymentMethod,
+          wallet: {
+            address: wallet,
+            ...(isMemoRequired && { memo }),
+          },
+          onramp: selectedPaymentMethod.ramp,
           supportedParams: {
             partnerData: {
               redirectUrl: {
-                success: process.env.REACT_APP_REDIRECT_URL || '',
-                failure: process.env.REACT_APP_REDIRECT_URL || '',
+                success: process.env.REACT_APP_REDIRECT_URL ?? '',
+                failure: process.env.REACT_APP_REDIRECT_URL ?? '',
               },
             },
           },
           metaData: {
-            quoteId: selectedPaymentMethod?.quoteId!,
+            quoteId: selectedPaymentMethod.quoteId,
           },
         })
 
@@ -169,71 +270,100 @@ const Asset: React.FC = () => {
       } catch (error) {
         console.log(error)
       } finally {
-        setIsLoading(false)
+        setStatus(null)
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isBuyDisabled, asset, selectedPaymentMethod]
+    [
+      isBuyDisabled,
+      asset,
+      selectedPaymentMethod,
+      isMemoRequired,
+      amount,
+      wallet,
+      memo,
+      selectedCurrency,
+    ]
   )
 
   return (
     <AppLayout>
       <Stack alignItems="flex-start">
         <IconButton
+          disableRipple
           onClick={() => navigate('/')}
           sx={{
             color: 'text.primary',
             typography: 'subtitle2',
+            '&:hover': {
+              backgroundColor: 'background.paper',
+            },
+            '&:focus': {
+              backgroundColor: 'background.paper',
+            },
           }}
         >
           <Icon icon="eva:arrow-ios-back-fill" />{' '}
-          <Typography component="span" variant="body2">
+          <Typography component="span" variant="body2" sx={{ pr: 1 }}>
             Back
           </Typography>
         </IconButton>
       </Stack>
 
-      <Typography sx={{ mt: 3 }}>
+      <Typography sx={{ mt: 3, mb: 1 }}>
         How much {asset?.name} would you like?
       </Typography>
 
       <Stack sx={{ px: 2 }}>
         <form onSubmit={buyCrypto}>
-          <AmountInput
-            onChange={setAmount}
-            amount={amount}
-            validationError={limitError}
-          />
+          <Stack direction="row" spacing={3}>
+            <AmountInput
+              onChange={(amount) =>
+                setAmount(amount ? +amount.toFixed(2) : null)
+              }
+              amount={amount}
+              validationError={limitError}
+            />
 
-          {isQuotesFetching && (
-            <Typography align="left" variant="body2" color="text.disabled">
-              <CircularProgress size={13} sx={{ color: 'text.disabled' }} />{' '}
-              Fetching best price...
-            </Typography>
-          )}
+            <CurrencySelect
+              onChange={setSelectedCurrency}
+              currencies={currencies}
+              selectedCurrency={selectedCurrency}
+            />
+          </Stack>
 
-          {hasQuoteError && (
-            <Typography align="left" variant="body2" color="text.disabled">
-              <FormHelperText error sx={{ px: 2, textAlign: 'left' }}>
-                No onramp available for these details. Please select a different
-                payment method or crypto.
-              </FormHelperText>
-            </Typography>
-          )}
-
-          {bestRate && !isQuotesFetching && (
-            <Typography align="left" variant="body2" color="text.disabled">
-              1 {asset?.code} ≈ {bestRate.toFixed(2)} USD
-            </Typography>
-          )}
+          <Typography align="left" variant="body2" color="text.disabled">
+            {status === Status.FETCHING_QUOTES ? (
+              <>
+                <CircularProgress size={13} sx={{ color: 'text.disabled' }} />{' '}
+                Fetching best price...
+              </>
+            ) : (
+              <>
+                {hasQuoteError && (
+                  <FormHelperText error sx={{ px: 2, textAlign: 'left' }}>
+                    No onramp available for these details. Please select a
+                    different payment method, fiat or crypto.
+                  </FormHelperText>
+                )}
+                {bestRate && (
+                  <>
+                    1 {asset?.code} ≈ {bestRate.toFixed(2)} {selectedCurrency}
+                  </>
+                )}
+              </>
+            )}
+          </Typography>
 
           <WalletInput wallet={wallet} onChange={setWallet} />
+
+          {isMemoRequired && <MemoInput memo={memo} onChange={setMemo} />}
 
           <PaymentMethodSelect
             amount={debouncedAmount}
             selectedPaymentMethod={selectedPaymentMethod}
             onChange={setSelectedPaymentMethod}
             options={paymentMethodOptions}
+            assetCode={asset?.code}
           />
 
           <Button

@@ -3,8 +3,10 @@ on:
   push:
     branches:
       - develop
-
-
+  workflow_dispatch:
+    branches:
+      - develop
+      
 # Concurrency group name ensures concurrent workflow runs wait for any in-progress job to finish
 concurrency:
   group: merge-${{ github.ref }}

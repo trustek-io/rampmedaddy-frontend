@@ -1,5 +1,4 @@
 import request from './request'
-import { v4 as uuidv4 } from 'uuid'
 
 export interface Error {
   errorId: number
@@ -15,6 +14,7 @@ export interface BuyQuotesArgs {
   amount: string
   paymentMethod?: string
   network: string
+  walletAddress?: string
 }
 
 export interface Limit {
@@ -54,6 +54,7 @@ export const getBuyQuotesApi = async ({
   amount,
   paymentMethod,
   network,
+  walletAddress,
 }: BuyQuotesArgs): Promise<BuyQuote[]> =>
   request({
     method: 'GET',
@@ -62,9 +63,7 @@ export const getBuyQuotesApi = async ({
       amount,
       paymentMethod,
       network,
-      isRecurringPayment: false,
       type: 'buy',
-      input: 'source',
-      uuid: uuidv4(),
+      walletAddress,
     },
   })

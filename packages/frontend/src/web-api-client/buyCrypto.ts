@@ -8,7 +8,10 @@ export interface BuyCryptoArgs {
   type: string
   paymentMethod: string
   network?: string
-  wallet: string | null
+  wallet: {
+    address: string
+    memo?: string
+  }
   supportedParams: {
     partnerData: {
       redirectUrl: {

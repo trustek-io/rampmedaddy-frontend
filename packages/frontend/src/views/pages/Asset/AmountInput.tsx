@@ -1,11 +1,9 @@
 import React from 'react'
-import { Box, InputAdornment, TextField } from '@mui/material'
-
-import { formatNumber } from 'src/common/helpers'
+import { TextField } from '@mui/material'
 
 interface AmountInputProps {
-  amount: string
-  onChange: (amount: string) => void
+  amount: number | null
+  onChange: (amount: number | null) => void
   validationError?: string
 }
 
@@ -17,54 +15,33 @@ const AmountInput: React.FC<AmountInputProps> = ({
   return (
     <TextField
       placeholder="0.00"
+      type="tel"
       sx={{
+        flex: 3,
         mt: 2,
         '& .MuiFormHelperText-root': {
           color: 'text.primary',
         },
+        '& input[type=number]': {
+          MozAppearance: 'textfield',
+        },
+        '& input[type=number]::-webkit-outer-spin-button': {
+          WebkitAppearance: 'none',
+          margin: 0,
+        },
+        '& input[type=number]::-webkit-inner-spin-button': {
+          WebkitAppearance: 'none',
+          margin: 0,
+        },
       }}
-      value={formatNumber(amount)}
+      value={amount}
       fullWidth
       variant="outlined"
-      type="text"
-      inputProps={{ sx: { color: 'text.primary' } }}
-      onChange={(event) => {
-        if (event.target.value.includes('.')) {
-          const [amount, decimalValue] = event.target.value
-            .replaceAll(',', '')
-            .split('.')
-
-          onChange(`${amount}.${decimalValue.slice(0, 2)}`)
-
-          return
-        }
-
-        onChange(event.target.value.replaceAll(',', ''))
+      inputProps={{
+        sx: { color: 'text.primary', backgroundColor: 'background.paper' },
       }}
-      InputProps={{
-        endAdornment: (
-          <InputAdornment position="end">
-            <Box
-              sx={{
-                typography: 'subtitle2',
-                py: '3px',
-                px: '8px',
-                borderRadius: '6px',
-                fontWeight: 600,
-                mr: 2,
-                color: 'text.primary',
-                fontSize: '22px',
-              }}
-            >
-              | USD
-            </Box>
-          </InputAdornment>
-        ),
-        sx: {
-          p: 0.5,
-          mt: 1,
-          backgroundColor: 'background.paper',
-        },
+      onChange={(event) => {
+        onChange(+event.target.value)
       }}
       error={!!validationError}
       helperText={validationError}
