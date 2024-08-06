@@ -176,16 +176,20 @@ const Asset: React.FC = () => {
     getBuyQuotes(debouncedAmount, selectedCurrency)
   }, [debouncedAmount, getBuyQuotes, selectedCurrency])
 
-  const limitError = useMemo(
-    () => getLimitErrorMessage(quotes, selectedCurrency),
-    [quotes, selectedCurrency]
-  )
+  const limitError = useMemo(() => {
+    if (status === Status.FETCHING_QUOTES || !!paymentMethodOptions.length)
+      return ''
+
+    return getLimitErrorMessage(quotes, selectedCurrency)
+  }, [quotes, selectedCurrency, paymentMethodOptions, status])
 
   const bestRate = useMemo(() => {
     if (limitError || !amount) return ''
 
-    return getBestRate(quotes)
-  }, [quotes, limitError, amount])
+    return selectedPaymentMethod?.ramp
+      ? selectedPaymentMethod.rate
+      : getBestRate(quotes)
+  }, [quotes, limitError, amount, selectedPaymentMethod])
 
   const hasQuoteError = useMemo(
     () => !limitError && !paymentMethodOptions.length && !!quotes.length,
@@ -317,9 +321,7 @@ const Asset: React.FC = () => {
                 setAmount(amount ? +amount.toFixed(2) : null)
               }
               amount={amount}
-              validationError={
-                status === Status.FETCHING_QUOTES ? '' : limitError
-              }
+              validationError={limitError}
             />
 
             <CurrencySelect
