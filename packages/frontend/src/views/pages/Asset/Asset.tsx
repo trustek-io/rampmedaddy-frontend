@@ -72,24 +72,30 @@ enum Status {
   FETCHING_DEFAULTS = 'FETCHING_DEFAULTS',
 }
 
-interface Provider {
-  ramp: string
-  enabled: boolean
+interface Flags {
+  providers: {
+    ramp: string
+    enabled: boolean
+  }[]
+  cryptoComProvider: boolean
 }
 
 const Asset: React.FC = () => {
   const { asset } = useAssetContext()
   const navigate = useNavigate()
-  const flags = useFlags<{ providers: Provider[] }>()
+  const { providers, cryptoComProvider } = useFlags<Flags>()
 
   const supportedRamps = useMemo(
     () =>
-      flags.providers?.length
-        ? flags.providers
-            .filter(({ enabled }) => enabled)
-            .map(({ ramp }) => ramp)
+      providers?.length
+        ? providers.filter(({ enabled }) => enabled).map(({ ramp }) => ramp)
         : [],
-    [flags.providers]
+    [providers]
+  )
+
+  const isCryptoComProviderFlagEnabled = useMemo(
+    () => cryptoComProvider,
+    [cryptoComProvider]
   )
 
   const [amount, setAmount] = useState<number | null>(null)
@@ -134,7 +140,10 @@ const Asset: React.FC = () => {
 
         setPaymentMethodOptions(getPaymentMethodOptions(supportedRampsQuotes))
 
-        if (SUPPORTED_CRYPTO_COM_FIATS.includes(selectedCurrency)) {
+        if (
+          isCryptoComProviderFlagEnabled &&
+          SUPPORTED_CRYPTO_COM_FIATS.includes(selectedCurrency)
+        ) {
           setPaymentMethodOptions((prev) => [
             ...prev,
             {
@@ -151,7 +160,13 @@ const Asset: React.FC = () => {
         setStatus(null)
       }
     },
-    [asset, supportedRamps, wallet, selectedCurrency]
+    [
+      asset,
+      supportedRamps,
+      wallet,
+      selectedCurrency,
+      isCryptoComProviderFlagEnabled,
+    ]
   )
 
   const getDefaults = useCallback(async () => {
