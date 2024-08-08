@@ -11,6 +11,7 @@ import {
 import { capitalize, indexOf } from 'lodash'
 
 import { PaymentMethodOption } from './Asset'
+import { isCryptoComProvider } from 'src/common/helpers'
 
 interface PaymentMethodSelectProps {
   options: PaymentMethodOption[]
@@ -61,7 +62,9 @@ const PaymentMethodSelect: React.FC<PaymentMethodSelectProps> = ({
         defaultValue={selectedPaymentMethod || EMPTY_PAYMENT_METHOD}
         value={selectedPaymentMethod || EMPTY_PAYMENT_METHOD}
         options={options}
-        getOptionLabel={(option) => capitalize(option.ramp)}
+        getOptionLabel={(option) =>
+          isCryptoComProvider(option) ? option.ramp : capitalize(option.ramp)
+        }
         isOptionEqualToValue={(option, value) => option.ramp === value.ramp}
         renderInput={(params) => (
           <TextField
@@ -93,7 +96,7 @@ const PaymentMethodSelect: React.FC<PaymentMethodSelectProps> = ({
             }}
           />
         )}
-        renderOption={(props, option, index) => (
+        renderOption={(props, option) => (
           <>
             <Stack
               sx={{ justifyContent: 'space-between !important' }}
@@ -104,23 +107,33 @@ const PaymentMethodSelect: React.FC<PaymentMethodSelectProps> = ({
               {...props}
             >
               <Stack spacing={0.5}>
-                <Typography
-                  sx={{ textTransform: 'capitalize', fontSize: '14px' }}
+                {isCryptoComProvider(option) ? (
+                  <Typography sx={{ fontSize: '14px' }}>
+                    {option.ramp}
+                  </Typography>
+                ) : (
+                  <Typography
+                    sx={{ textTransform: 'capitalize', fontSize: '14px' }}
+                  >
+                    {option.ramp}
+                  </Typography>
+                )}
+
+                {option.paymentMethods && (
+                  <Typography variant="body2" sx={{ fontSize: '10px' }}>
+                    {option.paymentMethods}
+                  </Typography>
+                )}
+              </Stack>
+
+              {option.payout && (
+                <Stack
+                  direction="row"
+                  sx={{ fontSize: '14px', textAlign: 'end' }}
                 >
-                  {option.ramp}
-                </Typography>
-
-                <Typography variant="body2" sx={{ fontSize: '10px' }}>
-                  {option.paymentMethods}
-                </Typography>
-              </Stack>
-
-              <Stack
-                direction="row"
-                sx={{ fontSize: '14px', textAlign: 'end' }}
-              >
-                {`${option.payout} ${assetCode}`}
-              </Stack>
+                  {`${option.payout} ${assetCode}`}
+                </Stack>
+              )}
             </Stack>
 
             {!isLastOption(option) && (

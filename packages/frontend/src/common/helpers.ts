@@ -76,7 +76,7 @@ export const getLimitErrorMessage = (
   return ''
 }
 
-export const getBestRate = (quotes: BuyQuote[]): number | undefined =>
+export const getRate = (quotes: BuyQuote[]): number | undefined =>
   quotes.find((quote) => quote.recommendations?.includes('BestPrice'))?.rate ||
   quotes.find((quote) => quote.recommendations?.includes('LowKyc'))?.rate
 
@@ -98,3 +98,7 @@ export const getCurrencies = (defaults: Record<string, Default>): string[] => {
 
   return uniq(sources)
 }
+
+export const isCryptoComProvider = (
+  paymentMethod: PaymentMethodOption | null
+): boolean => paymentMethod?.ramp === 'crypto.com'

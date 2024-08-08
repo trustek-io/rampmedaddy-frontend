@@ -14,11 +14,12 @@ import {
 
 // helpers
 import {
-  getBestRate,
+  getRate,
   getCurrencies,
   getLimitErrorMessage,
   getPaymentMethodOptions,
   getSupportedRampsQuotes,
+  isCryptoComProvider,
 } from 'src/common/helpers'
 
 // views
@@ -39,10 +40,12 @@ import {
   getBuyQuotesApi,
   BuyQuote,
   getDefaultsApi,
+  createCryptoComPaymentApi,
 } from 'src/web-api-client'
 import { useDebounce } from 'src/hooks/use-debounce'
 import CurrencySelect from './CurrencySelect'
 import MemoInput from './MemoInput'
+import { SUPPORTED_CRYPTO_COM_FIATS } from 'src/common/constants'
 
 const CRYPTO_REQUIRING_MEMO = [
   'AXL',
@@ -130,13 +133,25 @@ const Asset: React.FC = () => {
         setQuotes(supportedRampsQuotes)
 
         setPaymentMethodOptions(getPaymentMethodOptions(supportedRampsQuotes))
+
+        if (SUPPORTED_CRYPTO_COM_FIATS.includes(selectedCurrency)) {
+          setPaymentMethodOptions((prev) => [
+            ...prev,
+            {
+              rate: 0,
+              quoteId: '',
+              paymentMethods: '',
+              ramp: 'crypto.com',
+            },
+          ])
+        }
       } catch (error) {
         console.log(error)
       } finally {
         setStatus(null)
       }
     },
-    [asset, supportedRamps, wallet]
+    [asset, supportedRamps, wallet, selectedCurrency]
   )
 
   const getDefaults = useCallback(async () => {
@@ -159,23 +174,6 @@ const Asset: React.FC = () => {
     }
   }, [])
 
-  useEffect(() => {
-    getDefaults()
-  }, [getDefaults])
-
-  useEffect(() => {
-    if (!asset) navigate('/')
-  }, [asset, navigate])
-
-  useEffect(() => {
-    if (!paymentMethodOptions.length)
-      setSelectedPaymentMethod(EMPTY_PAYMENT_METHOD)
-  }, [paymentMethodOptions])
-
-  useEffect(() => {
-    getBuyQuotes(debouncedAmount, selectedCurrency)
-  }, [debouncedAmount, getBuyQuotes, selectedCurrency])
-
   const limitError = useMemo(() => {
     if (status === Status.FETCHING_QUOTES || !!paymentMethodOptions.length)
       return ''
@@ -183,12 +181,12 @@ const Asset: React.FC = () => {
     return getLimitErrorMessage(quotes, selectedCurrency)
   }, [quotes, selectedCurrency, paymentMethodOptions, status])
 
-  const bestRate = useMemo(() => {
+  const rate = useMemo(() => {
     if (limitError || !amount) return ''
 
     return selectedPaymentMethod?.ramp
       ? selectedPaymentMethod.rate
-      : getBestRate(quotes)
+      : getRate(quotes)
   }, [quotes, limitError, amount, selectedPaymentMethod])
 
   const hasQuoteError = useMemo(
@@ -285,6 +283,72 @@ const Asset: React.FC = () => {
     ]
   )
 
+  useEffect(() => {
+    getDefaults()
+  }, [getDefaults])
+
+  useEffect(() => {
+    if (!asset) navigate('/')
+  }, [asset, navigate])
+
+  useEffect(() => {
+    if (!paymentMethodOptions.length)
+      setSelectedPaymentMethod(EMPTY_PAYMENT_METHOD)
+  }, [paymentMethodOptions])
+
+  useEffect(() => {
+    getBuyQuotes(debouncedAmount, selectedCurrency)
+  }, [debouncedAmount, getBuyQuotes, selectedCurrency])
+
+  const createCryptoComPayment = useCallback(
+    async (event: React.FormEvent) => {
+      if (isBuyDisabled || !asset || !amount || (isMemoRequired && !memo))
+        return
+
+      event.stopPropagation()
+      event.preventDefault()
+
+      setStatus(Status.SUBMITTING)
+
+      const URL =
+        process.env.NODE_ENV === 'development'
+          ? 'http://localhost:3000/'
+          : process.env.REACT_APP_REDIRECT_URL
+
+      try {
+        const response = await createCryptoComPaymentApi({
+          amount,
+          currency: selectedCurrency,
+          crypto_currency: asset.code,
+          wallet_address: wallet,
+          network: asset.network,
+          return_url: URL!,
+          cancel_url: URL!,
+        })
+
+        const redirectUrl = response.payment_url
+        if (redirectUrl) window.location.href = redirectUrl
+      } catch (error) {
+        console.log(error)
+      } finally {
+        setStatus(null)
+      }
+    },
+    [
+      isBuyDisabled,
+      asset,
+      isMemoRequired,
+      amount,
+      memo,
+      selectedCurrency,
+      wallet,
+    ]
+  )
+
+  const submitApi = isCryptoComProvider(selectedPaymentMethod)
+    ? createCryptoComPayment
+    : buyCrypto
+
   return (
     <AppLayout>
       <Stack alignItems="flex-start">
@@ -314,7 +378,7 @@ const Asset: React.FC = () => {
       </Typography>
 
       <Stack sx={{ px: 2 }}>
-        <form onSubmit={buyCrypto}>
+        <form onSubmit={submitApi}>
           <Stack direction="row" spacing={3}>
             <AmountInput
               onChange={(amount) =>
@@ -345,9 +409,9 @@ const Asset: React.FC = () => {
                     different payment method, fiat or crypto.
                   </FormHelperText>
                 )}
-                {bestRate && (
+                {!!rate && (
                   <>
-                    1 {asset?.code} ≈ {bestRate.toFixed(2)} {selectedCurrency}
+                    1 {asset?.code} ≈ {rate.toFixed(2)} {selectedCurrency}
                   </>
                 )}
               </>
