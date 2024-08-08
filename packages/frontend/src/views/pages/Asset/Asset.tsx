@@ -110,6 +110,7 @@ const Asset: React.FC = () => {
     useState<PaymentMethodOption | null>(null)
   const [currencies, setCurrencies] = useState<string[]>([])
   const [selectedCurrency, setSelectedCurrency] = useState<string>('')
+  const [error, setError] = useState<string>('')
 
   const debouncedAmount = useDebounce(amount, 300)
 
@@ -344,7 +345,11 @@ const Asset: React.FC = () => {
         const redirectUrl = response.payment_url
         if (redirectUrl) window.location.href = redirectUrl
       } catch (error) {
-        console.log(error)
+        const errorMessage =
+          (error as any).response.data.error.code === 'amount_too_small'
+            ? 'Amount too small'
+            : 'Something went wrong'
+        setError(errorMessage)
       } finally {
         setStatus(null)
       }
@@ -396,11 +401,12 @@ const Asset: React.FC = () => {
         <form onSubmit={submitApi}>
           <Stack direction="row" spacing={3}>
             <AmountInput
-              onChange={(amount) =>
+              onChange={(amount) => {
                 setAmount(amount ? +amount.toFixed(2) : null)
-              }
+                setError('')
+              }}
               amount={amount}
-              validationError={limitError}
+              validationError={limitError || error}
             />
 
             <CurrencySelect

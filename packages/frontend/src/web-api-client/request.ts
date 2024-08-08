@@ -18,7 +18,7 @@ export const request = async <T>(config: AxiosRequestConfig): Promise<T> => {
 
 // Request interceptor
 axiosInstance.interceptors.request.use((config) => {
-  config.headers!['Authorization'] = `pk_prod_01J3CZHG87RNJV6K88PJ5G2VJK`
+  config.headers['Authorization'] = process.env.REACT_APP_ONRAMP_TOKEN
   return config
 })
 
