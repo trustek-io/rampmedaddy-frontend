@@ -20,6 +20,7 @@ import {
   getPaymentMethodOptions,
   getSupportedRampsQuotes,
   isCryptoComProvider,
+  getCryptoComLimitErrorMessage,
 } from 'src/common/helpers'
 
 // views
@@ -118,19 +119,35 @@ const Asset: React.FC = () => {
   const debouncedAmount = useDebounce(amount, 300)
 
   const supportedCryptoComAssets = useMemo(() => {
-    const assets: { code: string; network: string }[] = []
+    const assets: {
+      code: string
+      network: string
+      max: number
+      min: number
+    }[] = []
 
     cryptoComAssets.forEach((cryptoComAsset) => {
       cryptoComAsset.support_networks.forEach((network) => {
         assets.push({
           code: cryptoComAsset.currency_symbol,
           network: network.network_name.toLowerCase(),
+          max: cryptoComAsset.max_amount_collection.USD,
+          min: cryptoComAsset.min_amount_collection.USD,
         })
       })
     })
 
     return assets
   }, [cryptoComAssets])
+
+  const cryptoComAsset = useMemo(
+    () =>
+      supportedCryptoComAssets.find(
+        (supportedCryptoComAsset) =>
+          supportedCryptoComAsset.code === asset?.code
+      ),
+    [supportedCryptoComAssets, asset]
+  )
 
   const getBuyQuotes = useCallback(
     async (amount: string, currency: string) => {
@@ -159,16 +176,12 @@ const Asset: React.FC = () => {
 
         setPaymentMethodOptions(getPaymentMethodOptions(supportedRampsQuotes))
 
-        const cryptoComAsset = supportedCryptoComAssets.find(
-          (supportedCryptoComAsset) =>
-            supportedCryptoComAsset.code === asset.code
-        )
-
         if (
           isCryptoComProviderFlagEnabled &&
           SUPPORTED_CRYPTO_COM_FIATS.includes(selectedCurrency) &&
           cryptoComAsset &&
-          cryptoComAsset.network === asset.network
+          cryptoComAsset.network === asset.network &&
+          selectedCurrency === 'USD'
         ) {
           setPaymentMethodOptions((prev) => [
             ...prev,
@@ -192,7 +205,7 @@ const Asset: React.FC = () => {
       wallet,
       selectedCurrency,
       isCryptoComProviderFlagEnabled,
-      supportedCryptoComAssets,
+      cryptoComAsset,
     ]
   )
 
@@ -234,6 +247,18 @@ const Asset: React.FC = () => {
 
     return getLimitErrorMessage(quotes, selectedCurrency)
   }, [quotes, selectedCurrency, paymentMethodOptions, status])
+
+  const cryptoComLimitError = useMemo(() => {
+    if (
+      isCryptoComProvider(selectedPaymentMethod) &&
+      selectedCurrency === 'USD'
+    )
+      return getCryptoComLimitErrorMessage({
+        amount,
+        max: cryptoComAsset?.max,
+        min: cryptoComAsset?.min,
+      })
+  }, [selectedCurrency, cryptoComAsset, amount, selectedPaymentMethod])
 
   const rate = useMemo(() => {
     if (limitError || !amount) return ''
@@ -446,7 +471,7 @@ const Asset: React.FC = () => {
                 setError('')
               }}
               amount={amount}
-              validationError={limitError || error}
+              validationError={limitError || cryptoComLimitError || error}
             />
 
             <CurrencySelect

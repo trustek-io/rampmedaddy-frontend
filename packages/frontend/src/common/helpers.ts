@@ -76,6 +76,23 @@ export const getLimitErrorMessage = (
   return ''
 }
 
+export const getCryptoComLimitErrorMessage = ({
+  amount,
+  max,
+  min,
+}: {
+  amount: number | null
+  max?: number
+  min?: number
+}): string => {
+  if (!amount || !max || !min) return ''
+
+  if (amount > max || amount < min)
+    return `Amount should be in between USD ${min} and USD ${max}`
+
+  return ''
+}
+
 export const getRate = (quotes: BuyQuote[]): number | undefined =>
   quotes.find((quote) => quote.recommendations?.includes('BestPrice'))?.rate ||
   quotes.find((quote) => quote.recommendations?.includes('LowKyc'))?.rate
