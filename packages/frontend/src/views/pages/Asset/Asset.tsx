@@ -41,6 +41,8 @@ import {
   BuyQuote,
   getDefaultsApi,
   createCryptoComPaymentApi,
+  getCryptoComAssetsApi,
+  Asset as AssetI,
 } from 'src/web-api-client'
 import { useDebounce } from 'src/hooks/use-debounce'
 import CurrencySelect from './CurrencySelect'
@@ -111,8 +113,24 @@ const Asset: React.FC = () => {
   const [currencies, setCurrencies] = useState<string[]>([])
   const [selectedCurrency, setSelectedCurrency] = useState<string>('')
   const [error, setError] = useState<string>('')
+  const [cryptoComAssets, setCryptoComAssets] = useState<AssetI[]>([])
 
   const debouncedAmount = useDebounce(amount, 300)
+
+  const supportedCryptoComAssets = useMemo(() => {
+    const assets: { code: string; network: string }[] = []
+
+    cryptoComAssets.forEach((cryptoComAsset) => {
+      cryptoComAsset.support_networks.forEach((network) => {
+        assets.push({
+          code: cryptoComAsset.currency_symbol,
+          network: network.network_name.toLowerCase(),
+        })
+      })
+    })
+
+    return assets
+  }, [cryptoComAssets])
 
   const getBuyQuotes = useCallback(
     async (amount: string, currency: string) => {
@@ -141,9 +159,16 @@ const Asset: React.FC = () => {
 
         setPaymentMethodOptions(getPaymentMethodOptions(supportedRampsQuotes))
 
+        const cryptoComAsset = supportedCryptoComAssets.find(
+          (supportedCryptoComAsset) =>
+            supportedCryptoComAsset.code === asset.code
+        )
+
         if (
           isCryptoComProviderFlagEnabled &&
-          SUPPORTED_CRYPTO_COM_FIATS.includes(selectedCurrency)
+          SUPPORTED_CRYPTO_COM_FIATS.includes(selectedCurrency) &&
+          cryptoComAsset &&
+          cryptoComAsset.network === asset.network
         ) {
           setPaymentMethodOptions((prev) => [
             ...prev,
@@ -167,6 +192,7 @@ const Asset: React.FC = () => {
       wallet,
       selectedCurrency,
       isCryptoComProviderFlagEnabled,
+      supportedCryptoComAssets,
     ]
   )
 
@@ -183,6 +209,18 @@ const Asset: React.FC = () => {
 
       setCurrencies(currencies)
       setSelectedCurrency(recommended.source)
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setStatus(null)
+    }
+  }, [])
+
+  const getCryptoComAssets = useCallback(async () => {
+    try {
+      const assets = await getCryptoComAssetsApi()
+
+      setCryptoComAssets(assets)
     } catch (error) {
       console.log(error)
     } finally {
@@ -301,7 +339,9 @@ const Asset: React.FC = () => {
 
   useEffect(() => {
     getDefaults()
-  }, [getDefaults])
+    getCryptoComAssets()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (!asset) navigate('/')

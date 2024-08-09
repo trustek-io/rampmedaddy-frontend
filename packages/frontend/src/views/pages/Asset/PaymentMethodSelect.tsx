@@ -131,7 +131,7 @@ const PaymentMethodSelect: React.FC<PaymentMethodSelectProps> = ({
                   direction="row"
                   sx={{ fontSize: '14px', textAlign: 'end' }}
                 >
-                  {`${option.payout} ${assetCode}`}
+                  {`${option.payout.toFixed(6)} ${assetCode}`}
                 </Stack>
               )}
             </Stack>
