@@ -4,6 +4,7 @@ declare global {
       WebApp: {
         ready: () => void
         expand: () => void
+        initDataUnsafe: Record<string, any>
         MainButton: {
           text: string
           show: () => void
@@ -16,4 +17,4 @@ declare global {
   }
 }
 
-export {}
+export { }
