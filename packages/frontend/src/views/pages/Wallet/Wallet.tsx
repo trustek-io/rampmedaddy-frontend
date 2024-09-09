@@ -8,6 +8,7 @@ import { useAssetContext } from 'src/views/context/AssetContext'
 
 const Wallet: React.FC = () => {
   const navigate = useNavigate()
+
   const { isLoading } = useAssetContext()
 
   const actionsButtons = [
@@ -22,7 +23,9 @@ const Wallet: React.FC = () => {
     {
       icon: 'send_money',
       label: 'Send Money',
-      onClick: () => {},
+      onClick: () => {
+        navigate('/send-money')
+      },
       id: 'send_button',
     },
     {
