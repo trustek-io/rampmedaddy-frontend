@@ -7,7 +7,6 @@ import {
   Button,
   CircularProgress,
   FormHelperText,
-  IconButton,
   Stack,
   Typography,
 } from '@mui/material'
@@ -24,7 +23,6 @@ import {
 } from 'src/common/helpers'
 
 // views
-import Icon from 'src/views/components/Icon'
 import AppLayout from 'src/views/templates/AppLayout'
 import AmountInput from './AmountInput'
 import WalletInput from './WalletInput'
@@ -49,6 +47,7 @@ import { useDebounce } from 'src/hooks/use-debounce'
 import CurrencySelect from './CurrencySelect'
 import MemoInput from './MemoInput'
 import { SUPPORTED_CRYPTO_COM_FIATS } from 'src/common/constants'
+import BackButton from 'src/views/components/BackButton'
 
 const CRYPTO_REQUIRING_MEMO = [
   'AXL',
@@ -436,29 +435,9 @@ const Asset: React.FC = () => {
 
   return (
     <AppLayout>
-      <Stack alignItems="flex-start">
-        <IconButton
-          disableRipple
-          onClick={() => navigate('/')}
-          sx={{
-            color: 'text.primary',
-            typography: 'subtitle2',
-            '&:hover': {
-              backgroundColor: 'background.paper',
-            },
-            '&:focus': {
-              backgroundColor: 'background.paper',
-            },
-          }}
-        >
-          <Icon icon="eva:arrow-ios-back-fill" />{' '}
-          <Typography component="span" variant="body2" sx={{ pr: 1 }}>
-            Back
-          </Typography>
-        </IconButton>
-      </Stack>
+      <BackButton onClick={() => navigate('/assets')} />
 
-      <Typography sx={{ mt: 3, mb: 1 }}>
+      <Typography sx={{ mb: 1 }}>
         How much {asset?.name} would you like?
       </Typography>
 

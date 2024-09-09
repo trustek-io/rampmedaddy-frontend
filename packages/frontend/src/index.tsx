@@ -11,11 +11,12 @@ const theme = createTheme({
   palette: {
     background: {
       default: '#000000',
-      paper: '#212B36',
+      paper: '#212121',
     },
     text: {
       primary: '#ffffff',
       disabled: '#868A90',
+      secondary: '#9DFF1E',
     },
   },
 })

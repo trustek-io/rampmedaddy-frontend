@@ -11,6 +11,13 @@ declare global {
           onClick: (callback: () => void) => void
           offClick: () => void
         }
+        showPopup: VoidFunction
+        BackButton: {
+          text: string
+          show: () => void
+          onClick: (callback: () => void) => void
+          offClick: () => void
+        }
         sendData: (data: string) => void
       }
     }

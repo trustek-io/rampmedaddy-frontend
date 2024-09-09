@@ -24,6 +24,7 @@ import Icon from 'src/views/components/Icon'
 
 // helpers
 import { getFilteredAssets } from 'src/common/helpers'
+import BackButton from 'src/views/components/BackButton'
 
 const rotate = keyframes`
   0%, 30%, 50%, 70%, 100% {
@@ -99,6 +100,8 @@ const Assets: React.FC = () => {
 
   return (
     <AppLayout>
+      <BackButton onClick={() => navigate('/')} />
+
       <Typography>{userName}</Typography>
 
       <Stack sx={{ wordBreak: 'break-all' }}>{user}</Stack>
