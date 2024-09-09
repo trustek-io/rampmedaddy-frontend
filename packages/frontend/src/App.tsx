@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import Assets from './views/pages/Assets'
@@ -15,58 +15,66 @@ function App() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [userName, setUserName] = useState('')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [user, setUser] = useState('')
-
-  // const rpOptions = {
-  //   rpId: 'webauthn.fancy-app.site',
-  //   rpName: 'my super app',
-  // }
-
-  async function requestBiometricAuth() {
-    try {
-      const publicKey: PublicKeyCredentialRequestOptions = {
-        challenge: new Uint8Array([
-          /* Random bytes as challenge */
-        ]), // This needs to be a random array
-        allowCredentials: [
-          {
-            type: 'public-key', // Use string literal for 'public-key'
-            id: Uint8Array.from(atob('Your credential ID'), (c) =>
-              c.charCodeAt(0)
-            ), // Ensure id is Uint8Array
-          },
-        ],
-        timeout: 60000, // Optional: timeout for user interaction
-        userVerification: 'required', // Indicates biometrics or PIN
-      }
-
-      const credential = await navigator.credentials.get({ publicKey })
-      if (credential) {
-        alert('Authentication successful!')
-        console.log('Authentication successful!')
-        // Proceed with launching the Telegram Web App
-      }
-    } catch (error) {
-      console.error('Biometric authentication failed:', error)
-      // Handle failure, e.g., fallback to password or cancel app launch
-    }
-  }
+  const [user, setUser] = useState<Record<string, any> | null>(null)
 
   useEffect(() => {
     tele.ready()
     tele.expand()
-
-    // if (process.env.NODE_ENV === 'development') return
-
-    requestBiometricAuth()
-      .then(() => {
-        alert('Launching Telegram Web App...')
-        // Initialize your web app logic here
-      })
-      .catch((err) => {
-        alert('Failed to authenticate. Web app not launching.')
-      })
   }, [])
+
+  const getCredential = useCallback(async () => {
+    const challenge = new Uint8Array(32)
+    window.crypto.getRandomValues(challenge) // создаем случайный 32-байтовый challenge
+
+    const publicKeyCredentialCreationOptions = {
+      rp: {
+        name: 'rampmedaddy',
+        id: 'rampmedaddy-staging.trustek.io',
+      },
+      user: {
+        id: Uint8Array.from('userId123', (c) => c.charCodeAt(0)), // пример userId
+        name: 'User',
+        displayName: 'Full username',
+      },
+      challenge: challenge, // challenge передается в виде Uint8Array
+      pubKeyCredParams: [
+        {
+          type: 'public-key' as PublicKeyCredentialType,
+          alg: -7, // ECDSA с кривой P-256
+        },
+        {
+          type: 'public-key' as PublicKeyCredentialType,
+          alg: -257, // RSA с ограничением SHA-256
+        },
+      ],
+      timeout: 60000,
+      excludeCredentials: [],
+      authenticatorSelection: {
+        residentKey: 'preferred' as ResidentKeyRequirement,
+        requireResidentKey: false,
+        userVerification: 'required' as UserVerificationRequirement,
+      },
+      attestation: 'none' as AttestationConveyancePreference,
+      extensions: {
+        credProps: true,
+      },
+    }
+
+    // Запрос на создание новых учетных данных
+    return await navigator.credentials.create({
+      publicKey: publicKeyCredentialCreationOptions,
+    })
+  }, [])
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [ds, setds] = useState<any>()
+
+  useEffect(() => {
+    getCredential().then((res) => {
+      setds(res)
+      alert(`Testststtstst ${res}`)
+    })
+  }, [getCredential])
 
   // const { getCredential, getAssertion } = useWebAuthn(rpOptions)
 
@@ -76,7 +84,7 @@ function App() {
       if (user) {
         setUserName(`${user.first_name} ${user.last_name}` || user.username)
 
-        setUser(JSON.stringify(user))
+        setUser(user)
       }
     }
   }, [])
@@ -91,14 +99,14 @@ function App() {
   //   console.log(credential)
   // }, [getCredential, login])
 
-  useEffect(() => {
-    if (window.PublicKeyCredential) {
-      // Check if the browser supports WebAuthn for biometric auth
-      alert('WebAuthn supported!')
-    } else {
-      alert('WebAuthn not supported!')
-    }
-  }, [])
+  // useEffect(() => {
+  //   if (window.PublicKeyCredential) {
+  //     // Check if the browser supports WebAuthn for biometric auth
+  //     alert('WebAuthn supported!')
+  //   } else {
+  //     alert('WebAuthn not supported!')
+  //   }
+  // }, [])
 
   return (
     <BrowserRouter>
