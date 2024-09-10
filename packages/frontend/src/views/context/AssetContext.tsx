@@ -3,9 +3,10 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from 'react'
-
+import { Contact } from 'src/mock/contacts'
 import { Crypto, getAssetsApi } from 'src/web-api-client'
 
 interface AssetContextType {
@@ -13,6 +14,8 @@ interface AssetContextType {
   assets: Crypto[]
   setAsset: (asset: Crypto | null) => void
   isLoading: boolean
+  contact: Contact | null
+  setContact: (contact: Contact | null) => void
 }
 
 export const AssetContext = createContext<AssetContextType | null>(null)
@@ -29,12 +32,12 @@ const AssetProvider = ({ children }: { children: React.ReactNode }) => {
   const [asset, setAsset] = useState<Crypto | null>(null)
   const [assets, setAssets] = useState<Crypto[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [contact, setContact] = useState<Contact | null>(null)
 
   const getAssets = useCallback(async () => {
     setIsLoading(true)
     try {
       const response = await getAssetsApi()
-
       setAssets(response.message.crypto)
     } catch (error) {
       console.log(error)
@@ -45,14 +48,21 @@ const AssetProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     getAssets()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [getAssets])
 
-  return (
-    <AssetContext.Provider value={{ asset, setAsset, assets, isLoading }}>
-      {children}
-    </AssetContext.Provider>
+  const value = useMemo(
+    () => ({
+      asset,
+      setAsset,
+      assets,
+      isLoading,
+      contact,
+      setContact,
+    }),
+    [asset, assets, isLoading, contact]
   )
+
+  return <AssetContext.Provider value={value}>{children}</AssetContext.Provider>
 }
 
 export default AssetProvider

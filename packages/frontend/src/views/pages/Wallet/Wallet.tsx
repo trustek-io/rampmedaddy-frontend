@@ -1,9 +1,9 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Stack, Typography, IconButton, Box } from '@mui/material'
 
 import AppLayout from 'src/views/templates/AppLayout'
 import Icon from 'src/views/components/Icon'
-import { useNavigate } from 'react-router-dom'
 import { useAssetContext } from 'src/views/context/AssetContext'
 import Contacts from './Contacts'
 import { useBoolean } from 'src/hooks/use-boolean'
@@ -133,7 +133,9 @@ const Wallet: React.FC = () => {
         </Stack>
       </Stack>
 
-      <Contacts isOpen={contacts.value} onClose={contacts.onToggle} />
+      {contacts.value && (
+        <Contacts isOpen={contacts.value} onClose={contacts.onToggle} />
+      )}
     </AppLayout>
   )
 }
