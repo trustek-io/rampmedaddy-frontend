@@ -7,10 +7,38 @@ import Asset from 'src/views/pages/Asset'
 import Wallet from './views/pages/Wallet'
 // import { useWebAuthn } from 'react-hook-webauthn'
 import SendMoney from './views/pages/SendMoney'
+import { useWebAuthn } from 'react-hook-webauthn'
 
 const tele = window.Telegram.WebApp
 
+const rpOptions = {
+  rpId: 'rampmedaddy-staging.trustek.io',
+  rpName: 'rampmedaddy',
+}
+
 function App() {
+  const { getCredential } = useWebAuthn(rpOptions)
+
+  useEffect(() => {
+    const challenge = new Uint8Array(32)
+    window.crypto.getRandomValues(challenge)
+  }, [])
+
+  const onRegister = useCallback(async () => {
+    const credential = await getCredential({
+      challenge: 'stringFromServer',
+      userDisplayName: 'login',
+      userId: 'login',
+      userName: 'login',
+    })
+    console.log(credential)
+  }, [getCredential])
+
+  // const onAuth = useCallback(async () => {
+  //   const assertion = await getAssertion({ challenge: 'stringFromServer' })
+  //   console.log(assertion)
+  // }, [getAssertion])
+
   // const [login, setLogin] = useState('Login')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [userName, setUserName] = useState('')
@@ -22,59 +50,12 @@ function App() {
     tele.expand()
   }, [])
 
-  const getCredential = useCallback(async () => {
-    const challenge = new Uint8Array(32)
-    window.crypto.getRandomValues(challenge) // создаем случайный 32-байтовый challenge
-
-    const publicKeyCredentialCreationOptions = {
-      rp: {
-        name: 'rampmedaddy',
-        id: 'rampmedaddy-staging.trustek.io',
-      },
-      user: {
-        id: Uint8Array.from('userId123', (c) => c.charCodeAt(0)), // пример userId
-        name: 'User',
-        displayName: 'Full username',
-      },
-      challenge: challenge, // challenge передается в виде Uint8Array
-      pubKeyCredParams: [
-        {
-          type: 'public-key' as PublicKeyCredentialType,
-          alg: -7, // ECDSA с кривой P-256
-        },
-        {
-          type: 'public-key' as PublicKeyCredentialType,
-          alg: -257, // RSA с ограничением SHA-256
-        },
-      ],
-      timeout: 60000,
-      excludeCredentials: [],
-      authenticatorSelection: {
-        residentKey: 'preferred' as ResidentKeyRequirement,
-        requireResidentKey: false,
-        userVerification: 'required' as UserVerificationRequirement,
-      },
-      attestation: 'none' as AttestationConveyancePreference,
-      extensions: {
-        credProps: true,
-      },
-    }
-
-    // Запрос на создание новых учетных данных
-    return await navigator.credentials.create({
-      publicKey: publicKeyCredentialCreationOptions,
-    })
-  }, [])
-
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [ds, setds] = useState<any>()
 
   useEffect(() => {
-    getCredential().then((res) => {
-      setds(res)
-      alert(`Testststtstst ${res}`)
-    })
-  }, [getCredential])
+    onRegister()
+  }, [onRegister])
 
   // const { getCredential, getAssertion } = useWebAuthn(rpOptions)
 
