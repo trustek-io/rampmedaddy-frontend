@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import {
   Avatar,
@@ -11,7 +12,6 @@ import {
 } from '@mui/material'
 import CONTACTS, { Contact } from 'src/mock/contacts'
 import { useDebounce } from 'src/hooks/use-debounce'
-import { useNavigate } from 'react-router-dom'
 import { useAssetContext } from 'src/views/context/AssetContext'
 
 interface ContactsProps {
@@ -39,11 +39,10 @@ const Contacts: React.FC<ContactsProps> = ({ isOpen, onClose }) => {
         last_name.toLowerCase().includes(debouncedQuery)
     )
     setFilteredContacts(filteredResult)
-  }, [debouncedQuery, filteredContacts])
+  }, [debouncedQuery])
 
   useEffect(() => {
     if (contact) {
-      setQuery(`${contact.first_name} ${contact.last_name}`)
       navigate('/send-money')
     }
   }, [contact, navigate])

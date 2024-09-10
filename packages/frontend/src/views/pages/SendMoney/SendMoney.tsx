@@ -22,12 +22,13 @@ const SendMoney: React.FC = () => {
 
   const navigate = useNavigate()
 
-  // useEffect(() => {
-  //   if (!contact) navigate('/')
-  // }, [contact, navigate])
+  useEffect(() => {
+    if (!contact) navigate('/')
+  }, [contact, navigate])
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    navigate('/progress-steps')
   }
 
   useEffect(() => {
@@ -138,6 +139,7 @@ const SendMoney: React.FC = () => {
 
           <Button
             type="submit"
+            disabled={!amount}
             sx={{
               mt: 3,
               width: '100%',
