@@ -5,9 +5,12 @@ import AppLayout from 'src/views/templates/AppLayout'
 import Icon from 'src/views/components/Icon'
 import { useNavigate } from 'react-router-dom'
 import { useAssetContext } from 'src/views/context/AssetContext'
+import Contacts from './Contacts'
+import { useBoolean } from 'src/hooks/use-boolean'
 
 const Wallet: React.FC = () => {
   const navigate = useNavigate()
+  const contacts = useBoolean()
 
   const { isLoading } = useAssetContext()
 
@@ -23,9 +26,7 @@ const Wallet: React.FC = () => {
     {
       icon: 'send_money',
       label: 'Send Money',
-      onClick: () => {
-        navigate('/send-money')
-      },
+      onClick: contacts.onTrue,
       id: 'send_button',
     },
     {
@@ -131,6 +132,8 @@ const Wallet: React.FC = () => {
           ))}
         </Stack>
       </Stack>
+
+      <Contacts isOpen={contacts.value} onClose={contacts.onToggle} />
     </AppLayout>
   )
 }
