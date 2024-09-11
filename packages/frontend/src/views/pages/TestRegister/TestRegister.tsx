@@ -1,98 +1,125 @@
-import { Button, Stack } from '@mui/material'
-import React, { useEffect } from 'react'
-import { account, native, server } from 'src/lib/common'
-import base64url from 'base64url'
-// import { Buffer } from 'buffer'
+import { Button, Stack, Typography } from '@mui/material'
+import React, { useCallback, useEffect, useState } from 'react'
 
 const TestRegister: React.FC = () => {
-  let keyId: string
-  let contractId: string
-  let admins: number
-  let adminKeyId: string | undefined
-  let balance: string
-  let signers: {
-    id: string
-    pk: string
-    admin: boolean
-    expired?: boolean | undefined
-  }[] = []
+  const [keyId, setKeyId] = useState('')
 
-  // let keyName: string = ''
-  // let keyAdmin: boolean = false
-
-  async function getWalletSigners() {
-    signers = await server.getSigners(contractId)
-    console.log(signers)
-
-    const adminKeys = signers.filter(({ admin }) => admin)
-    adminKeyId = (adminKeys.find(({ id }) => keyId === id) || adminKeys[0]).id
-    admins = adminKeys.length
-  }
-
-  const register = async () => {
-    const user = prompt('Give this passkey a name')
-
-    if (!user) return
-
-    try {
-      const {
-        keyId: kid,
-        contractId: cid,
-        xdr,
-      } = await account.createWallet('Super Peach', user)
-      const res = await server.send(xdr!)
-
-      console.log(res)
-
-      const keyId = base64url(kid)
-      localStorage.setItem('sp:keyId', keyId)
-
-      console.log('register', cid)
-
-      await getWalletSigners()
-    } catch (err: any) {
-      alert(err.message)
-    }
-  }
-
-  async function getWalletBalance() {
-    const { result } = await native.balance({ id: contractId })
-
-    balance = result.toString()
-    console.log(balance)
-  }
-
-  async function connect(keyId_?: string) {
-    try {
-      const { keyId: kid, contractId: cid } = await account.connectWallet({
-        keyId: keyId_,
-        getContractId: (keyId) => server.getContractId(keyId),
-      })
-
-      keyId = base64url(kid)
-      localStorage.setItem('sp:keyId', keyId)
-
-      contractId = cid
-      console.log('connect', cid)
-
-      await getWalletBalance()
-      await getWalletSigners()
-    } catch (err: any) {
-      alert(err.message)
-    }
-  }
+  console.log(keyId)
 
   useEffect(() => {
-    if (localStorage.hasOwnProperty('sp:keyId')) {
-      keyId = localStorage.getItem('sp:keyId')!
-      connect(keyId)
+    const localKeyId = localStorage.getItem('keyId')
+
+    if (localKeyId) setKeyId(localKeyId)
+  }, [])
+
+  const [user, setUser] = useState<{
+    id: number
+    first_name: string
+    last_name: string
+  } | null>(null)
+
+  useEffect(() => {
+    if (window.Telegram.WebApp) {
+      const user = window.Telegram.WebApp.initDataUnsafe?.user
+      if (user) {
+        setUser(user)
+      }
     }
   }, [])
 
+  function generateClientChallenge() {
+    const challenge = new Uint8Array(32)
+    window.crypto.getRandomValues(challenge)
+
+    return challenge
+  }
+
+  const registerPasskey = useCallback(async () => {
+    // if (!user) return
+
+    if (!window.PublicKeyCredential) {
+      alert('WebAuthn API is not supported')
+      // Provide an alternative authentication method or notify the user
+      return
+    }
+
+    try {
+      const challenge = generateClientChallenge()
+
+      const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions =
+        {
+          challenge: Uint8Array.from(`${challenge}`, (c) => c.charCodeAt(0)),
+          rp: {
+            name: 'JHJJK',
+          },
+          user: {
+            id: Uint8Array.from(user ? `${user.id}` : 'kjlbhnvg12kjmnb', (c) =>
+              c.charCodeAt(0)
+            ),
+            name: user?.first_name ?? 'Test first_name',
+            displayName: user?.first_name ?? 'Test first_name',
+          },
+          pubKeyCredParams: [
+            {
+              type: 'public-key',
+              alg: -7,
+            },
+          ],
+          authenticatorSelection: {
+            authenticatorAttachment: 'platform',
+            userVerification: 'required',
+          },
+          timeout: 60000,
+          attestation: 'none' as AttestationConveyancePreference,
+        }
+
+      const credential = await navigator.credentials.create({
+        publicKey: publicKeyCredentialCreationOptions,
+      })
+
+      alert(`'Passkey created' ${credential?.id}`)
+
+      // if (!localStorage.hasOwnProperty('keyId') && credential?.id) {
+      // localStorage.setItem('keyId', credential.id)
+      setKeyId(credential?.id ?? '')
+      // }
+    } catch (error) {
+      alert(JSON.stringify(error))
+    }
+  }, [user])
+
+  async function authenticateWithFaceID() {
+    const challenge = generateClientChallenge()
+
+    const publicKeyCredentialRequestOptions: PublicKeyCredentialRequestOptions =
+      {
+        challenge: challenge,
+        allowCredentials: [
+          {
+            id: Uint8Array.from(`${keyId}`, (c) => c.charCodeAt(0)),
+            type: 'public-key',
+          },
+        ],
+        userVerification: 'required',
+        timeout: 60000,
+      }
+
+    try {
+      const assertion = await navigator.credentials.get({
+        publicKey: publicKeyCredentialRequestOptions,
+      })
+      console.log('Authentication successful:', assertion)
+    } catch (err) {
+      console.error('Error during authentication:', err)
+    }
+  }
+
   return (
     <Stack>
-      <Button onClick={register}>Register</Button>
-      <Button>Sign in</Button>
+      <Typography sx={{ color: '#fff' }}> {user?.first_name}</Typography>
+
+      <Button onClick={registerPasskey}>Register</Button>
+      {keyId && <Button onClick={authenticateWithFaceID}>Sign in</Button>}
     </Stack>
   )
 }
