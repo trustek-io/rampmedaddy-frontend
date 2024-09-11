@@ -39,7 +39,6 @@ const TestRegister: React.FC = () => {
 
     if (!window.PublicKeyCredential) {
       alert('WebAuthn API is not supported')
-      // Provide an alternative authentication method or notify the user
       return
     }
 
@@ -50,7 +49,8 @@ const TestRegister: React.FC = () => {
         {
           challenge: Uint8Array.from(`${challenge}`, (c) => c.charCodeAt(0)),
           rp: {
-            name: 'JHJJK',
+            name: 'rampmedaddy',
+            id: 'rampmedaddy-staging.trustek.io',
           },
           user: {
             id: Uint8Array.from(user ? `${user.id}` : 'kjlbhnvg12kjmnb', (c) =>
@@ -64,6 +64,7 @@ const TestRegister: React.FC = () => {
               type: 'public-key',
               alg: -7,
             },
+            { type: 'public-key', alg: -257 },
           ],
           authenticatorSelection: {
             authenticatorAttachment: 'platform',
@@ -79,10 +80,12 @@ const TestRegister: React.FC = () => {
 
       alert(`'Passkey created' ${credential?.id}`)
 
-      // if (!localStorage.hasOwnProperty('keyId') && credential?.id) {
-      // localStorage.setItem('keyId', credential.id)
-      setKeyId(credential?.id ?? '')
-      // }
+      console.log(credential)
+
+      if (!localStorage.hasOwnProperty('keyId') && credential?.id) {
+        localStorage.setItem('keyId', credential.id)
+        setKeyId(credential?.id ?? '')
+      }
     } catch (error) {
       alert(JSON.stringify(error))
     }
