@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useMemo, useRef, useEffect } from 'react'
+import React, { useCallback, useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 // @mui
@@ -10,7 +10,6 @@ import {
   keyframes,
   Stack,
   TextField,
-  Typography,
 } from '@mui/material'
 import Grid from '@mui/material/Unstable_Grid2'
 
@@ -50,8 +49,8 @@ const rotate = keyframes`
 
 const Assets: React.FC = () => {
   const [search, setSearch] = useState<string>('')
-  const [userName, setUserName] = useState('')
-  const [user, setUser] = useState('')
+  // const [userName, setUserName] = useState('')
+  // const [user, setUser] = useState('')
 
   const { setAsset, assets, isLoading } = useAssetContext()
   const navigate = useNavigate()
@@ -87,24 +86,24 @@ const Assets: React.FC = () => {
     return newFilteredAssets
   }, [assets, search])
 
-  useEffect(() => {
-    if (window.Telegram.WebApp) {
-      const user = window.Telegram.WebApp.initDataUnsafe?.user
-      if (user) {
-        setUserName(`${user.first_name} ${user.last_name}` || user.username)
+  // useEffect(() => {
+  //   if (window.Telegram.WebApp) {
+  //     const user = window.Telegram.WebApp.initDataUnsafe?.user
+  //     if (user) {
+  //       setUserName(`${user.first_name} ${user.last_name}` || user.username)
 
-        setUser(JSON.stringify(user))
-      }
-    }
-  }, [])
+  //       setUser(JSON.stringify(user))
+  //     }
+  //   }
+  // }, [])
 
   return (
     <AppLayout>
       <BackButton onClick={() => navigate('/')} />
 
-      <Typography>{userName}</Typography>
+      {/* <Typography>{userName}</Typography> */}
 
-      <Stack sx={{ wordBreak: 'break-all' }}>{user}</Stack>
+      {/* <Stack sx={{ wordBreak: 'break-all' }}>{user}</Stack> */}
 
       <TextField
         fullWidth
