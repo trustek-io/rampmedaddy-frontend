@@ -142,6 +142,8 @@ const SendMoney: React.FC = () => {
             placeholder="0.00"
             type="tel"
             sx={{
+              borderRadius: '15px',
+              backgroundColor: 'background.paper',
               width: '358px',
               mt: 3,
               mb: 1,
@@ -164,6 +166,7 @@ const SendMoney: React.FC = () => {
                 color: 'text.primary',
                 backgroundColor: 'background.paper',
                 fontSize: '50px',
+                borderRadius: '10px',
               },
             }}
             onChange={(event) => {
@@ -197,6 +200,7 @@ const SendMoney: React.FC = () => {
               setMessage(event.target.value)
             }
             sx={{
+              borderRadius: '15px',
               '& .MuiOutlinedInput-root': {
                 '& fieldset': {
                   borderColor: 'defaultColor',
@@ -208,6 +212,7 @@ const SendMoney: React.FC = () => {
                   borderColor: 'text.secondary',
                 },
               },
+              backgroundColor: 'background.paper',
             }}
           />
 

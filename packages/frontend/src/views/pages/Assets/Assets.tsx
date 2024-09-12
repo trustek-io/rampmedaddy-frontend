@@ -161,7 +161,7 @@ const Assets: React.FC = () => {
                     <Card
                       elevation={24}
                       sx={{
-                        backgroundColor: '#1e1e1e',
+                        backgroundColor: '#121212',
                         color: 'text.primary',
                         p: 2,
                         cursor: 'pointer',
