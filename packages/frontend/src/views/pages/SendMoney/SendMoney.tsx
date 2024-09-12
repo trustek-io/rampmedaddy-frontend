@@ -6,21 +6,79 @@ import {
   Stack,
   TextField,
 } from '@mui/material'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import BackButton from 'src/views/components/BackButton'
 import AppLayout from 'src/views/templates/AppLayout'
 import Icon from 'src/views/components/Icon'
 import { useAssetContext } from 'src/views/context/AssetContext'
+import { generateClientChallenge } from '../TestRegister/TestRegister'
 
 const SendMoney: React.FC = () => {
   const [message, setMessage] = useState('')
   const [amount, setAmount] = useState<number | null>(null)
+  const [keyId, setKeyId] = useState('')
 
   const { contact, setContact, setBalance, balance } = useAssetContext()
 
   const navigate = useNavigate()
+
+  const registerPasskey = useCallback(async () => {
+    // if (!user) return
+
+    if (!window.PublicKeyCredential) {
+      alert('WebAuthn API is not supported')
+      return
+    }
+
+    try {
+      const challenge = generateClientChallenge()
+
+      const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions =
+        {
+          challenge: Uint8Array.from(`${challenge}`, (c) => c.charCodeAt(0)),
+          rp: {
+            name: 'rampmedaddy',
+            // id: 'rampmedaddy-staging.trustek.io',
+          },
+          user: {
+            id: Uint8Array.from('kjlbhnvg12kjmnb', (c) => c.charCodeAt(0)),
+            name: 'Test Name',
+            displayName: 'Test Name',
+          },
+          pubKeyCredParams: [
+            {
+              type: 'public-key',
+              alg: -7,
+            },
+            { type: 'public-key', alg: -257 },
+          ],
+          authenticatorSelection: {
+            authenticatorAttachment: 'platform',
+            userVerification: 'required',
+          },
+          timeout: 60000,
+          attestation: 'none' as AttestationConveyancePreference,
+        }
+
+      const credential = await navigator.credentials.create({
+        publicKey: publicKeyCredentialCreationOptions,
+      })
+
+      // alert(`'Passkey created' ${credential?.id}`)
+
+      console.log(credential)
+      setKeyId(credential?.id ?? '')
+
+      // if (!localStorage.hasOwnProperty('keyId') && credential?.id) {
+      //   localStorage.setItem('keyId', credential.id)
+      // }
+    } catch (error) {
+      // alert(JSON.stringify(error))
+      console.log(error)
+    }
+  }, [])
 
   useEffect(() => {
     if (!contact) navigate('/')
@@ -29,8 +87,7 @@ const SendMoney: React.FC = () => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     if (!amount) return
     e.preventDefault()
-    navigate('/progress-steps')
-    setBalance(balance - amount)
+    registerPasskey()
   }
 
   useEffect(() => {
@@ -39,6 +96,15 @@ const SendMoney: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    if (keyId && amount) {
+      setTimeout(() => {
+        navigate('/progress-steps')
+        setBalance(balance - amount)
+      }, 1000)
+    }
+  }, [keyId, navigate, balance, amount, setBalance])
 
   return (
     <AppLayout isWallet>

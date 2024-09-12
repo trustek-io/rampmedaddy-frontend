@@ -1,16 +1,32 @@
-import { Button, Stack, Typography } from '@mui/material'
+import { Stack } from '@mui/material'
 import React, { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+
+export function generateClientChallenge() {
+  const challenge = new Uint8Array(32)
+  window.crypto.getRandomValues(challenge)
+
+  return challenge
+}
 
 const TestRegister: React.FC = () => {
   const [keyId, setKeyId] = useState('')
 
-  console.log(keyId)
+  const navigate = useNavigate()
 
   useEffect(() => {
-    const localKeyId = localStorage.getItem('keyId')
+    if (keyId) {
+      setTimeout(() => {
+        navigate('/wallet')
+      }, 1000)
+    }
+  }, [keyId, navigate])
 
-    if (localKeyId) setKeyId(localKeyId)
-  }, [])
+  // useEffect(() => {
+  //   const localKeyId = localStorage.getItem('keyId')
+
+  //   if (localKeyId) setKeyId(localKeyId)
+  // }, [])
 
   const [user, setUser] = useState<{
     id: number
@@ -26,13 +42,6 @@ const TestRegister: React.FC = () => {
       }
     }
   }, [])
-
-  function generateClientChallenge() {
-    const challenge = new Uint8Array(32)
-    window.crypto.getRandomValues(challenge)
-
-    return challenge
-  }
 
   const registerPasskey = useCallback(async () => {
     // if (!user) return
@@ -56,8 +65,8 @@ const TestRegister: React.FC = () => {
             id: Uint8Array.from(user ? `${user.id}` : 'kjlbhnvg12kjmnb', (c) =>
               c.charCodeAt(0)
             ),
-            name: user?.first_name ?? 'Test first_name',
-            displayName: user?.first_name ?? 'Test first_name',
+            name: user?.first_name ?? 'Test Name',
+            displayName: user?.first_name ?? 'Test Name',
           },
           pubKeyCredParams: [
             {
@@ -78,51 +87,57 @@ const TestRegister: React.FC = () => {
         publicKey: publicKeyCredentialCreationOptions,
       })
 
-      alert(`'Passkey created' ${credential?.id}`)
+      // alert(`'Passkey created' ${credential?.id}`)
 
       console.log(credential)
+      setKeyId(credential?.id ?? '')
 
-      if (!localStorage.hasOwnProperty('keyId') && credential?.id) {
-        localStorage.setItem('keyId', credential.id)
-        setKeyId(credential?.id ?? '')
-      }
+      // if (!localStorage.hasOwnProperty('keyId') && credential?.id) {
+      //   localStorage.setItem('keyId', credential.id)
+      // }
     } catch (error) {
-      alert(JSON.stringify(error))
+      // alert(JSON.stringify(error))
+      console.log(error)
     }
   }, [user])
 
-  const authenticateWithFaceID = React.useCallback(async () => {
-    const challenge = generateClientChallenge()
+  useEffect(() => {
+    registerPasskey()
+    // eslint-disable-next-line
+  }, [])
 
-    const publicKeyCredentialRequestOptions: PublicKeyCredentialRequestOptions =
-      {
-        challenge: challenge,
-        allowCredentials: [
-          {
-            id: Uint8Array.from(`${keyId}`, (c) => c.charCodeAt(0)),
-            type: 'public-key',
-          },
-        ],
-        userVerification: 'required',
-        timeout: 60000,
-      }
+  // const authenticateWithFaceID = React.useCallback(async () => {
+  //   const challenge = generateClientChallenge()
 
-    try {
-      const assertion = await navigator.credentials.get({
-        publicKey: publicKeyCredentialRequestOptions,
-      })
-      console.log('Authentication successful:', assertion)
-    } catch (err) {
-      console.error('Error during authentication:', err)
-    }
-  }, [keyId])
+  //   const publicKeyCredentialRequestOptions: PublicKeyCredentialRequestOptions =
+  //     {
+  //       challenge: challenge,
+  //       allowCredentials: [
+  //         {
+  //           id: Uint8Array.from(`${keyId}`, (c) => c.charCodeAt(0)),
+  //           type: 'public-key',
+  //         },
+  //       ],
+  //       userVerification: 'required',
+  //       timeout: 60000,
+  //     }
+
+  //   try {
+  //     const assertion = await navigator.credentials.get({
+  //       publicKey: publicKeyCredentialRequestOptions,
+  //     })
+  //     console.log('Authentication successful:', assertion)
+  //   } catch (err) {
+  //     console.error('Error during authentication:', err)
+  //   }
+  // }, [keyId])
 
   return (
     <Stack>
-      <Typography sx={{ color: '#fff' }}> {user?.first_name}</Typography>
+      {/* <Typography sx={{ color: '#fff' }}> {user?.first_name}</Typography>
 
       <Button onClick={registerPasskey}>Register</Button>
-      {keyId && <Button onClick={authenticateWithFaceID}>Sign in</Button>}
+      {keyId && <Button onClick={authenticateWithFaceID}>Sign in</Button>} */}
     </Stack>
   )
 }

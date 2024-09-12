@@ -21,7 +21,7 @@ const ProgressSteps = () => {
   useEffect(() => {
     if (activeStep === 3) {
       setTimeout(() => {
-        navigate('/')
+        navigate('/wallet')
       }, 1000)
     }
   }, [activeStep, navigate])
