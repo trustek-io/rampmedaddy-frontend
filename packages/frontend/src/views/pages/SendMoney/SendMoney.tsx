@@ -18,7 +18,7 @@ const SendMoney: React.FC = () => {
   const [message, setMessage] = useState('')
   const [amount, setAmount] = useState<number | null>(null)
 
-  const { contact, setContact } = useAssetContext()
+  const { contact, setContact, setBalance, balance } = useAssetContext()
 
   const navigate = useNavigate()
 
@@ -27,8 +27,10 @@ const SendMoney: React.FC = () => {
   }, [contact, navigate])
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    if (!amount) return
     e.preventDefault()
     navigate('/progress-steps')
+    setBalance(balance - amount)
   }
 
   useEffect(() => {
@@ -84,7 +86,7 @@ const SendMoney: React.FC = () => {
                 '&:hover fieldset': {
                   borderColor: 'hoverColor',
                 },
-                '&.Mui-focused fieldset': {
+                '&.Mui-focused:not(.Mui-error) fieldset': {
                   borderColor: 'text.secondary',
                 },
               },
@@ -113,6 +115,12 @@ const SendMoney: React.FC = () => {
                 </InputAdornment>
               ),
             }}
+            helperText={
+              amount && balance < amount
+                ? 'Amount should be less that balance'
+                : ''
+            }
+            error={!!(amount && balance < amount)}
           />
 
           <TextField
@@ -139,7 +147,7 @@ const SendMoney: React.FC = () => {
 
           <Button
             type="submit"
-            disabled={!amount}
+            disabled={!amount || balance < amount}
             sx={{
               mt: 3,
               width: '100%',

@@ -12,7 +12,7 @@ const Wallet: React.FC = () => {
   const navigate = useNavigate()
   const contacts = useBoolean()
 
-  const { isLoading } = useAssetContext()
+  const { isLoading, balance } = useAssetContext()
 
   const actionsButtons = [
     {
@@ -67,7 +67,7 @@ const Wallet: React.FC = () => {
             icon="bx:dollar"
             sx={{ width: '56px', height: '66px', color: '#707579' }}
           />
-          <Typography sx={{ fontSize: '60px' }}>250</Typography>
+          <Typography sx={{ fontSize: '60px' }}>{balance}</Typography>
         </Stack>
 
         <Stack direction="row" spacing={1}>

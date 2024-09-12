@@ -50,7 +50,7 @@ const TestRegister: React.FC = () => {
           challenge: Uint8Array.from(`${challenge}`, (c) => c.charCodeAt(0)),
           rp: {
             name: 'rampmedaddy',
-            id: 'rampmedaddy-staging.trustek.io',
+            // id: 'rampmedaddy-staging.trustek.io',
           },
           user: {
             id: Uint8Array.from(user ? `${user.id}` : 'kjlbhnvg12kjmnb', (c) =>
@@ -91,7 +91,7 @@ const TestRegister: React.FC = () => {
     }
   }, [user])
 
-  async function authenticateWithFaceID() {
+  const authenticateWithFaceID = React.useCallback(async () => {
     const challenge = generateClientChallenge()
 
     const publicKeyCredentialRequestOptions: PublicKeyCredentialRequestOptions =
@@ -115,7 +115,7 @@ const TestRegister: React.FC = () => {
     } catch (err) {
       console.error('Error during authentication:', err)
     }
-  }
+  }, [keyId])
 
   return (
     <Stack>

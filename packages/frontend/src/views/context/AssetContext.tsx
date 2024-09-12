@@ -16,6 +16,8 @@ interface AssetContextType {
   isLoading: boolean
   contact: Contact | null
   setContact: (contact: Contact | null) => void
+  balance: number
+  setBalance: (value: number) => void
 }
 
 export const AssetContext = createContext<AssetContextType | null>(null)
@@ -33,6 +35,7 @@ const AssetProvider = ({ children }: { children: React.ReactNode }) => {
   const [assets, setAssets] = useState<Crypto[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [contact, setContact] = useState<Contact | null>(null)
+  const [balance, setBalance] = useState<number>(250)
 
   const getAssets = useCallback(async () => {
     setIsLoading(true)
@@ -58,8 +61,10 @@ const AssetProvider = ({ children }: { children: React.ReactNode }) => {
       isLoading,
       contact,
       setContact,
+      balance,
+      setBalance,
     }),
-    [asset, assets, isLoading, contact]
+    [asset, assets, isLoading, contact, balance]
   )
 
   return <AssetContext.Provider value={value}>{children}</AssetContext.Provider>
