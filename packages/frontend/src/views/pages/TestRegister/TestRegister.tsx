@@ -1,10 +1,11 @@
 import { Button, Stack, Typography } from '@mui/material'
 import React, { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const TestRegister: React.FC = () => {
   const [keyId, setKeyId] = useState('')
 
-  console.log(keyId)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const localKeyId = localStorage.getItem('keyId')
@@ -78,7 +79,7 @@ const TestRegister: React.FC = () => {
         publicKey: publicKeyCredentialCreationOptions,
       })
 
-      alert(`'Passkey created' ${credential?.id}`)
+      // alert(`'Passkey created' ${credential?.id}`)
 
       console.log(credential)
 
@@ -86,6 +87,8 @@ const TestRegister: React.FC = () => {
         localStorage.setItem('keyId', credential.id)
         setKeyId(credential?.id ?? '')
       }
+
+      navigate('/wallet')
     } catch (error) {
       alert(JSON.stringify(error))
     }
