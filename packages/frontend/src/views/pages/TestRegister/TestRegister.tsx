@@ -1,4 +1,4 @@
-import { Stack } from '@mui/material'
+import { Button, Stack } from '@mui/material'
 import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -17,7 +17,7 @@ const TestRegister: React.FC = () => {
   useEffect(() => {
     if (keyId) {
       setTimeout(() => {
-        navigate('/wallet')
+        window.location.href = 'tg://resolve?domain=@RansdomTestBot'
       }, 1000)
     }
   }, [keyId, navigate])
@@ -43,23 +43,29 @@ const TestRegister: React.FC = () => {
     }
   }, [])
 
+  console.log('user', user)
+
   const registerPasskey = useCallback(async () => {
     // if (!user) return
 
+    console.log('>>>', window.PublicKeyCredential)
+
     if (!window.PublicKeyCredential) {
-      alert('WebAuthn API is not supported')
+      console.log('WebAuthn API is not supported')
       return
     }
 
     try {
       const challenge = generateClientChallenge()
 
+      console.log('challenge', challenge)
+
       const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions =
         {
           challenge: Uint8Array.from(`${challenge}`, (c) => c.charCodeAt(0)),
           rp: {
             name: 'rampmedaddy',
-            // id: 'rampmedaddy-staging.trustek.io',
+            // id: 'c830-82-193-116-75.ngrok-free.app/',
           },
           user: {
             id: Uint8Array.from(user ? `${user.id}` : 'kjlbhnvg12kjmnb', (c) =>
@@ -87,7 +93,7 @@ const TestRegister: React.FC = () => {
         publicKey: publicKeyCredentialCreationOptions,
       })
 
-      // alert(`'Passkey created' ${credential?.id}`)
+      console.log(`'Passkey created' ${credential?.id}`)
 
       console.log(credential)
       setKeyId(credential?.id ?? '')
@@ -96,15 +102,14 @@ const TestRegister: React.FC = () => {
       //   localStorage.setItem('keyId', credential.id)
       // }
     } catch (error) {
-      // alert(JSON.stringify(error))
-      console.log(error)
+      console.log('error', error)
     }
   }, [user])
 
-  useEffect(() => {
-    registerPasskey()
-    // eslint-disable-next-line
-  }, [])
+  // useEffect(() => {
+  //   registerPasskey()
+  //   // eslint-disable-next-line
+  // }, [])
 
   // const authenticateWithFaceID = React.useCallback(async () => {
   //   const challenge = generateClientChallenge()
@@ -134,6 +139,8 @@ const TestRegister: React.FC = () => {
 
   return (
     <Stack>
+      <Button onClick={registerPasskey}>Launch</Button>
+
       {/* <Typography sx={{ color: '#fff' }}> {user?.first_name}</Typography>
 
       <Button onClick={registerPasskey}>Register</Button>
