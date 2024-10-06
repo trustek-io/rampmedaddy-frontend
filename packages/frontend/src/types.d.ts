@@ -20,6 +20,8 @@ declare global {
         }
         sendData: (data: string) => void
         openLink: (url: string) => void
+        showAlert: (message: string, callback?: VoidFunction) => void
+        initData: string
       }
     }
   }

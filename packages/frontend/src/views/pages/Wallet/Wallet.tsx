@@ -6,7 +6,7 @@ import AppLayout from 'src/views/templates/AppLayout'
 import Icon from 'src/views/components/Icon'
 import { useAssetContext } from 'src/views/context/AssetContext'
 import Contacts from './Contacts'
-import { useBoolean } from 'src/hooks/use-boolean'
+import { useBoolean } from 'src/hooks/useBoolean'
 
 const Wallet: React.FC = () => {
   const navigate = useNavigate()

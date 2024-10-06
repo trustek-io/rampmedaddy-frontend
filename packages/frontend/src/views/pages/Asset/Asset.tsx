@@ -43,7 +43,7 @@ import {
   getCryptoComAssetsApi,
   Asset as AssetI,
 } from 'src/web-api-client'
-import { useDebounce } from 'src/hooks/use-debounce'
+import { useDebounce } from 'src/hooks/useDebounce'
 import CurrencySelect from './CurrencySelect'
 import MemoInput from './MemoInput'
 import { SUPPORTED_CRYPTO_COM_FIATS } from 'src/common/constants'
