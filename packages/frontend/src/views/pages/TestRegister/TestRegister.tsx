@@ -48,21 +48,6 @@ const TestRegister: React.FC = () => {
     if (localKeyId) setKeyId(localKeyId)
   }, [])
 
-  const [user, setUser] = useState<{
-    id: number
-    first_name: string
-    last_name: string
-  } | null>(null)
-
-  useEffect(() => {
-    if (window.Telegram.WebApp) {
-      const user = window.Telegram.WebApp.initDataUnsafe?.user
-      if (user) {
-        setUser(user)
-      }
-    }
-  }, [])
-
   const registerPasskey = useCallback(async () => {
     if (!window.PublicKeyCredential) {
       console.log('WebAuthn API is not supported')
@@ -80,9 +65,8 @@ const TestRegister: React.FC = () => {
             // id: 'c830-82-193-116-75.ngrok-free.app/',
           },
           user: {
-            id: Uint8Array.from(
-              user ? `${user.id}` : `${generateRandomBuffer(16)}`,
-              (c) => c.charCodeAt(0)
+            id: Uint8Array.from(`${generateRandomBuffer(16)}`, (c) =>
+              c.charCodeAt(0)
             ),
             name: `${searchParams.firstName} ${searchParams.lastName}`,
             displayName: `${searchParams.firstName} ${searchParams.lastName}`,
@@ -112,7 +96,7 @@ const TestRegister: React.FC = () => {
     } catch (error) {
       console.log('error', error)
     }
-  }, [user])
+  }, [searchParams])
 
   const authenticateWithFaceID = React.useCallback(async () => {
     const storedCred = getStoredCredential()
