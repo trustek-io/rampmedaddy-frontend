@@ -11,7 +11,7 @@ import {
   Typography,
 } from '@mui/material'
 import CONTACTS, { Contact } from 'src/mock/contacts'
-import { useDebounce } from 'src/hooks/use-debounce'
+import { useDebounce } from 'src/hooks/useDebounce'
 import { useAssetContext } from 'src/views/context/AssetContext'
 
 interface ContactsProps {
