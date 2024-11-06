@@ -44,16 +44,18 @@ export const useSigner = () => {
   const fund = async (to: string) => {
     try {
       const { built, ...transfer } = await native.transfer({
-        from: fundPubkey,
+        from: await fundPubkey,
         to,
         amount: BigInt(100 * 10_000_000),
       })
+
+      const signer = await fundSigner
 
       await transfer.signAuthEntries({
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         address: fundPubkey,
-        signAuthEntry: (auth) => fundSigner.signAuthEntry(auth),
+        signAuthEntry: (auth) => signer.signAuthEntry(auth),
       })
 
       // Use tRPC mutation to send the transaction to the Stellar network

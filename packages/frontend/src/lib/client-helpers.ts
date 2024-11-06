@@ -37,10 +37,9 @@ export const fundKeypair = new Promise<Keypair>(async (resolve) => {
 
   resolve(keypair)
 })
-export const fundPubkey = (await fundKeypair).publicKey()
-export const fundSigner = basicNodeSigner(
-  await fundKeypair,
-  env.NEXT_PUBLIC_NETWORK_PASSPHRASE
+export const fundPubkey = fundKeypair.then((keypair) => keypair.publicKey())
+export const fundSigner = fundKeypair.then((keypair) =>
+  basicNodeSigner(keypair, env.NEXT_PUBLIC_NETWORK_PASSPHRASE)
 )
 
 export const sac = new SACClient({

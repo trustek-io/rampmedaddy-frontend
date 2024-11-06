@@ -23,33 +23,33 @@ export const useCreateStellarPasskey = (strooperUser?: User) => {
     onError: ClientTRPCErrorHandler,
   })
 
-  const fundWallet = async (contractId: string) => {
-    try {
-      setLoading(true)
+  // const fundWallet = async (contractId: string) => {
+  //   try {
+  //     setLoading(true)
 
-      const { built, ...transfer } = await native.transfer({
-        to: contractId,
-        from: fundPubkey,
-        amount: BigInt(100 * 10_000_000),
-      })
+  //     const { built, ...transfer } = await native.transfer({
+  //       to: contractId,
+  //       from: await fundPubkey,
+  //       amount: BigInt(100 * 10_000_000),
+  //     })
 
-      const a = await transfer.signAuthEntries({
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        address: fundPubkey,
-        signAuthEntry: (auth) => fundSigner.signAuthEntry(auth),
-      })
+  //     const a = await transfer.signAuthEntries({
+  //       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  //       // @ts-ignore
+  //       address: fundPubkey,
+  //       signAuthEntry: (auth) => fundSigner.signAuthEntry(auth),
+  //     })
 
-      console.log('aaaa:', a)
+  //     console.log('aaaa:', a)
 
-      await sendTransaction({ xdr: built!.toXDR() })
-      toast.success('Successfully funded wallet')
-    } catch (err) {
-      toast.error((err as Error)?.message ?? 'Failed to fund wallet')
-    } finally {
-      setLoading(false)
-    }
-  }
+  //     await sendTransaction({ xdr: built!.toXDR() })
+  //     toast.success('Successfully funded wallet')
+  //   } catch (err) {
+  //     toast.error((err as Error)?.message ?? 'Failed to fund wallet')
+  //   } finally {
+  //     setLoading(false)
+  //   }
+  // }
 
   // Create a function to handle the wallet creation process
   const create = async (): Promise<string> => {

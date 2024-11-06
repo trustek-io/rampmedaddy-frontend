@@ -29,7 +29,7 @@ export function API({ stack }: StackContext) {
   const site = new StaticSite(stack, "ReactSite", {
     path: "packages/frontend",
     buildCommand: "npm run build",
-    buildOutput: "build",
+    buildOutput: ".next",
     environment: {
       NEXT_PUBLIC_CRYPTO_COM_TOKEN: cryptoComKeys[stack.stage],
       NEXT_PUBLIC_REDIRECT_URL: redirectUrls[stack.stage],
@@ -51,7 +51,8 @@ export function API({ stack }: StackContext) {
       NEXT_PUBLIC_RPC_URL: "https://soroban-testnet.stellar.org",
       NEXT_PUBLIC_APP_URL: redirectUrls[stack.stage],
       NEXT_PUBLIC_TELEGRAM_BOT_URL: botUrl[stack.stage],
-      NEXT_PUBLIC_NETWORK_PASSPHRASE: "Test SDF Network ; September 2015"
+      NEXT_PUBLIC_NETWORK_PASSPHRASE: "Test SDF Network ; September 2015",
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE20: "true"
     },
     customDomain: {
       domainName: domainsMapping[stack.stage],
