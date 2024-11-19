@@ -7,6 +7,7 @@ import Icon from '../_components/Icon'
 import { useAssetContext } from '~/context/AssetContext'
 import Contacts from './Contacts'
 import { useRouter } from 'next/navigation'
+import MiniAppLayout from '../_components/MiniAppLayout'
 
 const Wallet: React.FC = () => {
   const router = useRouter()
@@ -58,7 +59,7 @@ const Wallet: React.FC = () => {
   ]
 
   return (
-    <>
+    <MiniAppLayout isWallet>
       <Typography color="#CFCDCD">Total Balance</Typography>
 
       <Stack alignItems="center" justifyContent="center">
@@ -136,7 +137,7 @@ const Wallet: React.FC = () => {
       {contacts.value && (
         <Contacts isOpen={contacts.value} onClose={contacts.onToggle} />
       )}
-    </>
+    </MiniAppLayout>
   )
 }
 

@@ -261,12 +261,6 @@ export default function Home() {
     window.Telegram.WebApp.BiometricManager.updateBiometricToken('')
   }
 
-  // useEffect(() => {
-  //   if (!contractId) return
-
-  //   router.push('/ass')
-  // }, [contractId, router])
-
   return (
     <div>
       {isAuthenticated ? (

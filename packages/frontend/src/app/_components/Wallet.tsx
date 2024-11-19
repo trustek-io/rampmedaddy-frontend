@@ -8,7 +8,7 @@ import { CreatePasskey } from '~/app/_components/CreatePasskey'
 import SendMoneyForm from '~/app/_components/SendMoneyForm'
 import ReceiveMoney from '~/app/_components/ReceiveMoney'
 import { useContractStore } from '~/hooks/stores/useContractStore'
-import Assets from '../assets/page'
+import WalletPage from '../wallet/page'
 import { useAssetContext } from '~/context/AssetContext'
 import LoadingDots from '~/components/icons/loading-dots'
 
@@ -62,7 +62,7 @@ export const Wallet: React.FC<WalletProps> = ({
     )
   }
 
-  return <Assets />
+  return <WalletPage />
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-100 p-4">
