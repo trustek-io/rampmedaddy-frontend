@@ -16,10 +16,10 @@ const MiniAppLayout: React.FC<MiniAppLayoutProps> = ({
       style={{
         textAlign: 'center',
         backgroundColor: '#121212',
-        height: '100vh',
+        minHeight: '100vh',
         padding: '10px',
         color: '#ffffff',
-        overflow: 'hidden',
+        overflow: 'auto',
       }}
     >
       <Box

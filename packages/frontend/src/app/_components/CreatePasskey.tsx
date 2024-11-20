@@ -114,8 +114,8 @@ export const CreatePasskey: React.FC<CreatePasskeyProps> = ({
             className="mx-auto my-0"
             src={'/logo.png'}
             alt="RampMeDaddy Logo"
-            width={65}
-            height={65}
+            width={150}
+            height={150}
           />
 
           <CardTitle className="text-center text-2xl font-semibold">
@@ -169,9 +169,7 @@ export const CreatePasskey: React.FC<CreatePasskeyProps> = ({
                 onClick={connectPasskey}
               >
                 {connectingPasskey ? (
-                  <>
-                    <LoadingDots color="white" />
-                  </>
+                  <LoadingDots color="white" />
                 ) : (
                   <>
                     <Fingerprint className="mr-2 h-6 w-6" />

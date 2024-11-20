@@ -1,13 +1,13 @@
 'use client'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
-import { Shield, Share2, Copy } from 'lucide-react'
+import { Share2, Copy } from 'lucide-react'
 import { useContractStore } from '~/hooks/stores/useContractStore'
 import { generateQrCode, shortStellarAddress } from '~/lib/utils'
 import { env } from '~/env'
 import Image from 'next/image'
+import { Button as MuiButton } from '@mui/material'
 
 export default function ReceiveMoney() {
   const { contractId: walletAddress } = useContractStore()
@@ -53,7 +53,7 @@ export default function ReceiveMoney() {
         <div className="space-y-2">
           <Label
             htmlFor="address"
-            className="text-sm font-medium text-zinc-700"
+            className="text-sm font-medium text-zinc-600"
           >
             Your Wallet Address
           </Label>
@@ -69,7 +69,7 @@ export default function ReceiveMoney() {
               type="button"
               variant="outline"
               size="icon"
-              className="border-zinc-300 hover:bg-zinc-100"
+              className="border-zinc-300 hover:bg-zinc-100 bg-zinc-800"
               onClick={handleCopy}
             >
               <Copy className="h-4 w-4" />
@@ -79,16 +79,27 @@ export default function ReceiveMoney() {
         </div>
       </div>
 
-      <Button
-        className="w-full bg-zinc-800 py-6 text-lg text-white transition-colors duration-300 hover:bg-zinc-900"
-        size="lg"
+      <MuiButton
+        sx={{
+          mt: 3,
+          width: '100%',
+          backgroundColor: 'text.secondary',
+          color: '#000',
+          fontWeight: 700,
+          '&:focused': { backgroundColor: 'text.secondary' },
+          '&:hover': {
+            backgroundColor: 'text.secondary',
+            opacity: 0.8,
+          },
+          height: '40px',
+        }}
         onClick={handleShare}
       >
         <Share2 className="mr-2 h-5 w-5" />
         Share Address
-      </Button>
+      </MuiButton>
 
-      <div className="space-y-3 rounded-lg bg-zinc-50 p-4">
+      <div className="space-y-3 rounded-lg bg-zinc-200 p-4">
         <h2 className="text-sm font-semibold text-zinc-700">
           How to Receive Money
         </h2>

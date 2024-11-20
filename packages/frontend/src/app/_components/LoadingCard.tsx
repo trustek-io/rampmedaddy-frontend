@@ -19,8 +19,8 @@ const LoadingCard = () => {
               className="mx-auto my-0"
               src={'/logo.png'}
               alt="RampMeDaddy Logo"
-              width={65}
-              height={65}
+              width={150}
+              height={150}
             />
             <h1 className="flex items-center justify-center text-2xl font-semibold ">
               Secure Access

@@ -5,6 +5,8 @@ import { Label } from '~/components/ui/label'
 import { Camera, Send } from 'lucide-react'
 import { useState } from 'react'
 import { env } from '~/env'
+import { Button as MuiButton } from '@mui/material'
+import MiniAppLayout from './MiniAppLayout'
 
 export default function SendMoneyForm({
   openQRScanner,
@@ -55,7 +57,7 @@ export default function SendMoneyForm({
             {openQRScanner && (
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="icon"
                 className="border-2 border-zinc-300 hover:bg-zinc-100"
                 onClick={openQRScanner}
@@ -68,14 +70,25 @@ export default function SendMoneyForm({
         </div>
       </div>
 
-      <Button
-        className="w-full bg-zinc-800 py-6 text-lg text-white transition-colors duration-300 hover:bg-zinc-900"
-        size="lg"
+      <MuiButton
+        sx={{
+          mt: 3,
+          width: '100%',
+          backgroundColor: 'text.secondary',
+          color: '#000',
+          fontWeight: 700,
+          '&:focused': { backgroundColor: 'text.secondary' },
+          '&:hover': {
+            backgroundColor: 'text.secondary',
+            opacity: 0.8,
+          },
+          height: '40px',
+        }}
         onClick={handleSendMoney}
       >
         <Send className="mr-2 h-5 w-5" />
         Send Money
-      </Button>
+      </MuiButton>
 
       <p className="text-center text-xs text-zinc-500">
         By sending, you agree to the terms of service and privacy policy.

@@ -37,21 +37,17 @@ export default function RootLayout({
                 style={{
                   textAlign: 'center',
                   backgroundColor: '#121212',
-                  height: '100vh',
+                  // height: '100vh',
                   padding: '10px',
                   color: '#ffffff',
-                  overflow: 'hidden',
+                  // overflow: 'hidden',
                 }}
               >
-                <header>
-                  {/* <img
-                  src={isWallet ? logoWallet : logo}
-                  className="AppLayout__logo"
-                  alt="logo"
-                /> */}
-                </header>
-
-                <main style={{ overflow: 'hidden' }}>{children}</main>
+                <main
+                // style={{ overflow: 'hidden' }}
+                >
+                  {children}
+                </main>
               </div>
             </AssetProvider>
           </CustomThemeProvider>

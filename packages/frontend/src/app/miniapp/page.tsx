@@ -290,8 +290,8 @@ export default function Home() {
                   className="mx-auto my-0"
                   src={'/logo.png'}
                   alt="RampMeDaddy Logo"
-                  width={65}
-                  height={65}
+                  width={150}
+                  height={150}
                 />
                 <Typography variant="h1" fontSize={20}>
                   Secure Access

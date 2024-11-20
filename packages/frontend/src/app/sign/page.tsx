@@ -10,7 +10,7 @@ import {
 } from '~/lib/utils'
 import { useSigner } from '~/hooks/useSigner'
 import { useContractStore } from '~/hooks/stores/useContractStore'
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import { CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { useSearchParams } from 'next/navigation'
 import { Label } from '~/components/ui/label'
 import { Input } from '~/components/ui/input'
@@ -22,6 +22,8 @@ import TransactionConfirmation from '~/app/sign/components/TransactionConfirmati
 import { useGetSigners } from '~/hooks/useGetSigners'
 import { api } from '~/trpc/react'
 import { useFunder } from '~/hooks/useFunder'
+import { Card } from '@mui/material'
+import { Button as MuiButton } from '@mui/material'
 
 export default function SignTransaction() {
   const searchParams = useSearchParams()
@@ -69,27 +71,33 @@ export default function SignTransaction() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-100 p-4">
-      <Card className="w-full max-w-md border-0 bg-white shadow-lg">
+    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+      <Card
+        sx={{
+          backgroundColor: 'background.paper',
+          borderRadius: '20px',
+          width: '100%',
+        }}
+      >
         <CardHeader className="flex items-center justify-center space-y-1">
           <Image
             className="mx-auto my-0"
             src={'/logo_wallet.png'}
             alt="RampMeDaddy Logo"
-            width={65}
-            height={65}
+            width={150}
+            height={150}
           />
-          <CardTitle className="text-center text-2xl font-semibold text-zinc-900">
+          <CardTitle className="text-center text-2xl font-semibold text-zinc-400">
             Sign Transaction
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="relative -my-2 rounded-md bg-zinc-100 p-3 text-center">
+          <div className="relative -my-2 rounded-md bg-zinc-200 p-3 text-center">
             <p className="text-sm text-zinc-500">Available Balance</p>
             {isLoading ? (
               <LoadingDots />
             ) : (
-              <p className="text-lg font-semibold">
+              <p className="text-lg font-semibold text-zinc-500">
                 {balance ? fromStroops(balance) : '0.00'} XLM
               </p>
             )}
@@ -121,7 +129,7 @@ export default function SignTransaction() {
             <div className="space-y-2">
               <Label
                 htmlFor="amount"
-                className="text-sm font-medium text-zinc-700"
+                className="text-sm font-medium text-zinc-500"
               >
                 Amount
               </Label>
@@ -147,7 +155,7 @@ export default function SignTransaction() {
             <div className="space-y-2">
               <Label
                 htmlFor="address"
-                className="text-sm font-medium text-zinc-700"
+                className="text-sm font-medium text-zinc-500"
               >
                 Recipient Address
               </Label>
@@ -163,14 +171,14 @@ export default function SignTransaction() {
               </div>
             </div>
           </div>
-          <div className="space-y-3 rounded-lg bg-zinc-50 p-4">
+          <div className="space-y-3 rounded-lg bg-zinc-200 p-4">
             <h2 className="text-sm font-semibold text-zinc-700">
               Transaction Details
             </h2>
             <div className="space-y-2 text-sm">
               <p className="flex justify-between">
                 <span className="text-zinc-500">From:</span>
-                <span className="flex cursor-pointer font-mono text-zinc-700">
+                <span className="flex cursor-pointer font-mono text-zinc-500">
                   {shortStellarAddress(contractId ?? '')}
                   {contractId && (
                     <Copy
@@ -203,7 +211,7 @@ export default function SignTransaction() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-3 rounded-lg bg-zinc-50 p-4">
+          <div className="flex items-center space-x-3 rounded-lg bg-zinc-200 p-4">
             <AlertCircle className="h-5 w-5 flex-shrink-0 text-zinc-500" />
             <p className="text-xs text-zinc-600">
               Ensure you&apos;re on a secure network before signing this
@@ -211,10 +219,20 @@ export default function SignTransaction() {
             </p>
           </div>
 
-          <Button
+          <MuiButton
             disabled={!address || !amount || isExecuting}
-            className="w-full bg-zinc-800 py-6 text-lg text-white transition-colors duration-300 hover:bg-zinc-900"
-            size="lg"
+            sx={{
+              mt: 3,
+              width: '100%',
+              backgroundColor: 'text.secondary',
+              color: '#000',
+              fontWeight: 700,
+              '&:focused': { backgroundColor: 'text.secondary' },
+              '&:hover': {
+                backgroundColor: 'text.secondary',
+                opacity: 0.8,
+              },
+            }}
             onClick={async () => {
               if (!address || !amount) {
                 toast.error('Please enter a recipient address and amount')
@@ -234,15 +252,26 @@ export default function SignTransaction() {
           >
             <Fingerprint className="mr-2 h-6 w-6" />
             {isExecuting ? <LoadingDots color="white" /> : 'Transfer'}{' '}
-          </Button>
-          <Button
-            className="w-full bg-zinc-800 py-6 text-lg text-white transition-colors duration-300 hover:bg-zinc-900"
-            size="lg"
+          </MuiButton>
+
+          <MuiButton
+            sx={{
+              mt: 3,
+              width: '100%',
+              backgroundColor: 'text.secondary',
+              color: '#000',
+              fontWeight: 700,
+              '&:focused': { backgroundColor: 'text.secondary' },
+              '&:hover': {
+                backgroundColor: 'text.secondary',
+                opacity: 0.8,
+              },
+            }}
             onClick={connect}
           >
             <Fingerprint className="mr-2 h-6 w-6" />
             Connect
-          </Button>
+          </MuiButton>
         </CardContent>
       </Card>
     </div>
