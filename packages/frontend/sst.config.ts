@@ -1,7 +1,5 @@
 /// <reference path="./.sst/platform/config.d.ts" />
 
-import { HostedZone } from 'aws-cdk-lib/aws-route53'
-
 export default $config({
   app(input) {
     const domainsMapping: { [key: string]: string; } = {
@@ -59,5 +57,7 @@ export default $config({
       domain: domainsMapping[input?.stage]
     };
   },
-  async run() {},
+  async run() {
+    new sst.aws.Nextjs("rampmedaddy-frontend");
+  },
 });

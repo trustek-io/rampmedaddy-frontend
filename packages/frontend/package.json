@@ -10,10 +10,10 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "dev": "next dev",
-    "postinstall": "prisma generate",
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint": "next lint",
-    "start": "next start",
-    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\""
+    "postinstall": "prisma generate",
+    "start": "next start"
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",
@@ -47,6 +47,7 @@
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.4.1",
     "server-only": "^0.0.1",
+    "sst": "3.3.30",
     "superjson": "^2.2.1",
     "tailwind-merge": "^2.5.3",
     "tailwindcss-animate": "^1.0.7",
@@ -73,15 +74,15 @@
     "typescript": "^5.5.3"
   },
   "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
     "development": [
       "last 1 chrome version",
       "last 1 firefox version",
       "last 1 safari version"
+    ],
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
     ]
   },
   "ct3aMetadata": {
