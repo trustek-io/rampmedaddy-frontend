@@ -1,0 +1,107 @@
+import { Button } from '~/components/ui/button'
+import { CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import { CheckCircle, ArrowLeft, ExternalLink } from 'lucide-react'
+import { shortStellarAddress } from '~/lib/utils'
+import Image from 'next/image'
+import { FC } from 'react'
+import { Card } from '@mui/material'
+import { Button as MuiButton } from '@mui/material'
+import { env } from '~/env'
+
+interface TransactionConfirmationProps {
+  amount: string
+  recipient: string
+}
+
+const TransactionConfirmation: FC<TransactionConfirmationProps> = ({
+  amount,
+  recipient,
+}) => {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+      <Card
+        sx={{
+          backgroundColor: 'background.paper',
+          borderRadius: '20px',
+          width: '100%',
+        }}
+      >
+        <CardHeader className="flex items-center justify-center space-y-1">
+          <Image
+            className="mx-auto my-0"
+            src={'/logo_wallet.png'}
+            alt="RampMeDaddy Logo"
+            width={150}
+            height={150}
+          />
+          <CardTitle className="text-center text-2xl font-semibold text-zinc-300">
+            Transaction Confirmed
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex flex-col items-center justify-center space-y-2">
+            <CheckCircle className="h-16 w-16 text-green-500" />
+            <p className="text-lg font-medium text-zinc-400">
+              Your transaction was successful!
+            </p>
+          </div>
+
+          <div className="space-y-3 rounded-lg bg-zinc-200 p-4">
+            <h2 className="text-sm font-semibold text-zinc-700">
+              Transaction Details
+            </h2>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-zinc-500">Amount Sent:</span>
+                <span className="font-medium text-zinc-900">{amount} XLM</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-500">Recipient:</span>
+                <span className="font-medium text-zinc-900">
+                  {shortStellarAddress(recipient)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col space-y-4">
+            <Button
+              onClick={() => window.location.reload()}
+              className="bg-zinc-700 py-2 text-sm text-white transition-colors duration-300 hover:bg-zinc-900"
+            >
+              <ExternalLink className="mr-2 h-4 w-4" />
+              View on Block Explorer
+            </Button>
+            <MuiButton
+              sx={{
+                mt: 3,
+                width: '100%',
+                textTransform: 'capitalize',
+                backgroundColor: 'text.secondary',
+                color: '#000',
+                fontWeight: 700,
+                '&:focused': { backgroundColor: 'text.secondary' },
+                '&:hover': {
+                  backgroundColor: 'text.secondary',
+                  opacity: 0.8,
+                },
+              }}
+              onClick={() =>
+                (window.location.href = env.NEXT_PUBLIC_TELEGRAM_BOT_URL)
+              }
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Wallet
+            </MuiButton>
+          </div>
+
+          <p className="text-center text-xs text-zinc-500">
+            Transaction completed at {new Date().toLocaleString()}
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+export default TransactionConfirmation

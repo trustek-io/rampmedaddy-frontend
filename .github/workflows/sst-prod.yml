@@ -34,3 +34,4 @@ jobs:
       - name: Deploy app
         run: |
           npm i && npx sst deploy --stage production
+        working-directory: ./packages/frontend
