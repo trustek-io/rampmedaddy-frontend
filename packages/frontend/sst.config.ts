@@ -4,7 +4,7 @@ export default $config({
   app(input) {
     return {
       name: "rampmedaddy-frontend",
-      removal: $app.stage === "production" ? "retain" : "remove",
+      removal: input.stage === "production" ? "retain" : "remove",
       home: "aws",
     };
   },
