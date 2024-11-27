@@ -2,6 +2,13 @@
 
 export default $config({
   app(input) {
+    return {
+      name: "rampmedaddy-frontend",
+      removal: $app.stage === "production" ? "retain" : "remove",
+      home: "aws",
+    };
+  },
+  async run() {
     const domainsMapping: { [key: string]: string; } = {
       staging: 'rampmedaddy-staging.trustek.io',
       production: 'rampmedaddy.trustek.io',
@@ -26,18 +33,16 @@ export default $config({
       staging: 'https://rampmedaddy-staging.trustek.io',
       production: 'https://rampmedaddy.trustek.io',
     }
-    return {
-      name: "rampmedaddy-frontend",
-      removal: input?.stage === "production" ? "retain" : "remove",
-      home: "aws",
+
+    new sst.aws.Nextjs($app.name, {
       environment: {
-        NEXT_PUBLIC_CRYPTO_COM_TOKEN: cryptoComKeys[input?.stage],
-        NEXT_PUBLIC_REDIRECT_URL: redirectUrls[input?.stage],
-        NEXT_PUBLIC_ONRAMP_TOKEN: onrampKeys[input?.stage],
-        NEXT_PUBLIC_LAUNCHDARKLY_KEY: launchDarklyClientSideIds[input?.stage],
+        NEXT_PUBLIC_CRYPTO_COM_TOKEN: cryptoComKeys[$app.stage],
+        NEXT_PUBLIC_REDIRECT_URL: redirectUrls[$app.stage],
+        NEXT_PUBLIC_ONRAMP_TOKEN: onrampKeys[$app.stage],
+        NEXT_PUBLIC_LAUNCHDARKLY_KEY: launchDarklyClientSideIds[$app.stage],
         DATABASE_URL: "postgresql://postgres:12nsFNqi2VYFOdLz@localhost:5432/strooper-wallet",
         DB_PASSWORD: "password",
-        TELEGRAM_BOT_URL: botUrl[input?.stage],
+        TELEGRAM_BOT_URL: botUrl[$app.stage],
         LAUNCHTUBE_URL: "https://testnet.launchtube.xyz",
         LAUNCHETUBE_JWT: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxOTU0NTQxMDgwM2U3MjgzMmUwODllOTVlMjU1MDQ0M2I0NmY2MjNmMjRmMjY1YjA0NTk4MzdjNmMzYTA4NjcxIiwiZXhwIjoxNzM3NTI4ODQwLCJjcmVkaXRzIjoxMDAwMDAwMDAwLCJpYXQiOjE3MzAyNzEyNDB9.UOSqHLEHMeYsVWIRcp17u7ZKBXReG0zo0K5l9Wgz9Qc",
         MERCURYT_URL: "https://api.mercurydata.app/graphql",
@@ -49,15 +54,12 @@ export default $config({
         NEXT_PUBLIC_FACTORY_CONTRACT_ID: "CCD7M4VVKELWL2RO4XJOZOGBDF3ESFIKG2EAU4ETVNAKMRRKE6YIQU5E",
         NEXT_PUBLIC_NATIVE_CONTRACT_ID: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
         NEXT_PUBLIC_RPC_URL: "https://soroban-testnet.stellar.org",
-        NEXT_PUBLIC_APP_URL: redirectUrls[input?.stage],
-        NEXT_PUBLIC_TELEGRAM_BOT_URL: botUrl[input?.stage],
+        NEXT_PUBLIC_APP_URL: redirectUrls[$app.stage],
+        NEXT_PUBLIC_TELEGRAM_BOT_URL: botUrl[$app.stage],
         NEXT_PUBLIC_NETWORK_PASSPHRASE: "Test SDF Network ; September 2015",
         FORCE_JAVASCRIPT_ACTIONS_TO_NODE20: "true"
       },
-      domain: domainsMapping[input?.stage]
-    };
-  },
-  async run() {
-    new sst.aws.Nextjs("rampmedaddy-frontend");
+      domain: domainsMapping[$app.stage]
+    });
   },
 });
